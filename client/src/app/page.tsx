@@ -1,9 +1,8 @@
 "use client";
-
 import { useEffect, useState } from "react";
 
 export default function Home() {
-  const [message, setMessage] = useState<string>("");
+  const [message, setMessage] = useState("");
 
   useEffect(() => {
     const fetchMessage = async () => {
@@ -16,14 +15,16 @@ export default function Home() {
       }
     };
 
-    fetchMessage();
-    const interval = setInterval(fetchMessage, 2000); // Fetch message every 5 seconds
+    // Fetch message every 2 seconds
+    const interval = setInterval(fetchMessage, 2000);
+
+    // Cleanup interval on component unmount
     return () => clearInterval(interval);
   }, []);
 
   return (
     <div>
-      <h1>ESP32 Message</h1>
+      <h1>Message from ESP32:</h1>
       <p>{message}</p>
     </div>
   );
