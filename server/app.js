@@ -1,6 +1,8 @@
 const express = require("express");
 const cors = require("cors");
 const mqtt = require("mqtt");
+const { db } = require("./firebase");
+require("dotenv").config();
 
 const app = express();
 const port = 3001;
@@ -9,9 +11,9 @@ const port = 3001;
 app.use(cors());
 
 // MQTT client setup
-const client = mqtt.connect("mqtt://34.16.11.88");
+const client = mqtt.connect(`mqtt://${process.env.MQTT_VM_INSTANCE_IP}`);
 
-let message = "";
+let messageLog = []; // Array to store message history
 
 // Subscribe to a topic
 client.on("connect", () => {
@@ -25,10 +27,17 @@ client.on("connect", () => {
   });
 });
 
-// Receive messages
+// Receive messages and store them in the log
 client.on("message", (topic, msg) => {
-  console.log(`Received message on topic ${topic}: ${msg.toString()}`);
-  message = msg.toString();
+  const message = msg.toString();
+  console.log(`Received message on topic ${topic}: ${message}`);
+
+  // Add the new message to the log
+  messageLog.push({
+    timestamp: new Date().toISOString(),
+    topic,
+    message,
+  });
 });
 
 // Handle connection errors
@@ -38,10 +47,38 @@ client.on("error", (error) => {
 
 // Endpoint to get the latest message
 app.get("/message", (req, res) => {
-  if (message) {
-    res.json({ message });
-  } else {
-    res.json({ message: "No message received yet." });
+  const latestMessage = messageLog[messageLog.length - 1] || {
+    message: "No message received yet.",
+  };
+  res.json(latestMessage);
+});
+
+// Endpoint to get the full message log
+app.get("/messages", (req, res) => {
+  res.json(messageLog);
+});
+
+// Test Firestore - Add a document
+app.get("/add-doc", async (req, res) => {
+  try {
+    const docRef = await db.collection("testCollection").add({
+      name: "Jane Doe",
+      age: 25,
+    });
+    res.json({ success: true, id: docRef.id });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Test Firestore - Read documents
+app.get("/get-docs", async (req, res) => {
+  try {
+    const snapshot = await db.collection("testCollection").get();
+    const docs = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    res.json(docs);
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
