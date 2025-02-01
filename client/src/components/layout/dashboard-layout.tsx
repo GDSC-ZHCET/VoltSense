@@ -39,7 +39,7 @@ export default function DashboardLayout({
         </div>
 
         {/* Main content */}
-        <main className="flex-1">
+        <main className="flex-1 font-sans">
           <div className="container mx-auto py-6 px-4 md:px-6">{children}</div>
         </main>
       </div>
