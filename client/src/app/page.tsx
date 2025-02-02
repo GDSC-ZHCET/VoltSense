@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 
+
 export default function Home() {
   const [messages, setMessages] = useState("");
 
@@ -19,9 +20,8 @@ export default function Home() {
   }, []);
 
   return (
-    <div>
-      <h1>Message from ESP32:</h1>
-      <p>{messages}</p>
-    </div>
+    <>
+      
+    </>
   );
 }
