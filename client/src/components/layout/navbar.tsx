@@ -1,12 +1,4 @@
-import {
-  Navbar,
-  NavbarBrand,
-  NavbarContent,
-  NavbarItem,
-  NavbarMenuToggle,
-  NavbarMenu,
-  NavbarMenuItem,
-} from "@heroui/navbar";
+import { Navbar, NavbarBrand, NavbarContent, NavbarItem } from "@heroui/navbar";
 import Link from "next/link";
 import { Button } from "../ui/button";
 
@@ -55,9 +47,9 @@ export default function Nav() {
       <NavbarContent className="hidden sm:flex gap-x-8 space-x-4" justify="end">
         <NavbarItem className="hidden lg:flex">
           <Button
-            as={Link}
-            href="#"
-            variant="flat"
+            // as={Link}
+            // href="#"
+            // variant="flat"
             className="border border-grey-500 px-5 py-2 rounded-lg text-white-500 text-base hover:bg-blue-500 hover:text-white transition"
           >
             Login
@@ -65,9 +57,9 @@ export default function Nav() {
         </NavbarItem>
         <NavbarItem>
           <Button
-            as={Link}
-            href="#"
-            variant="flat"
+            // as={Link}
+            // href="#"
+            // variant="flat"
             className="border border-grey-500 px-5 py-2 rounded-lg text-white-500  text-base hover:bg-blue-500 hover:text-white transition"
           >
             Sign Up
