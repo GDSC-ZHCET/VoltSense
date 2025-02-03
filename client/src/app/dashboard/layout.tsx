@@ -1,24 +1,22 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 import { Sidebar } from "@/components/sidebar";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const pathname = usePathname();
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col px-2">
       <header className="sticky top-0 z-40 border-b bg-background">
-        <div className="container flex h-16 items-center justify-between">
+        {/* <Nav /> */}
+        <div className="container flex h-16 items-center justify-between sm:hidden">
           {/* <h1 className="text-2xl font-bold">Smart Switch Dashboard</h1> */}
           <Button
             variant="ghost"
-            className="md:hidden"
+            className="sm:hidden"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
             <Menu className="h-6 w-6" />
