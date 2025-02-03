@@ -150,75 +150,77 @@ function RecentReadings() {
 
 export default function DashboardPage() {
   return (
-    <DashboardShell>
-      <DashboardHeader
-        heading="Dashboard"
-        text="Overview of your smart switch system."
-      >
-        <Button>Refresh</Button>
-      </DashboardHeader>
-      <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2 lg:w-auto">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="readings">Recent Readings</TabsTrigger>
-        </TabsList>
-        <TabsContent value="overview" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Total Power Consumption
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">45.2 kWh</div>
-                <p className="text-xs text-muted-foreground">
-                  +20.1% from last month
-                </p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Current Power
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">1.2 kW</div>
-                <p className="text-xs text-muted-foreground">
-                  +7% from average
-                </p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Voltage</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">220 V</div>
-                <p className="text-xs text-muted-foreground">Stable</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Device Status
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center space-x-2">
-                  <Switch id="device-status" />
-                  <Label htmlFor="device-status">On</Label>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-          <Overview />
-        </TabsContent>
-        <TabsContent value="readings">
-          <RecentReadings />
-        </TabsContent>
-      </Tabs>
-    </DashboardShell>
+    <main className="flex flex-col">
+      <DashboardShell>
+        <DashboardHeader
+          heading="Dashboard"
+          text="Overview of your smart switch system."
+        >
+          <Button>Refresh</Button>
+        </DashboardHeader>
+        <Tabs defaultValue="overview" className="space-y-4">
+          <TabsList className="grid w-full grid-cols-2 lg:w-auto">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="readings">Recent Readings</TabsTrigger>
+          </TabsList>
+          <TabsContent value="overview" className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Total Power Consumption
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">45.2 kWh</div>
+                  <p className="text-xs text-muted-foreground">
+                    +20.1% from last month
+                  </p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Current Power
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">1.2 kW</div>
+                  <p className="text-xs text-muted-foreground">
+                    +7% from average
+                  </p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Voltage</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">220 V</div>
+                  <p className="text-xs text-muted-foreground">Stable</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Device Status
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center space-x-2">
+                    <Switch id="device-status" />
+                    <Label htmlFor="device-status">On</Label>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+            <Overview />
+          </TabsContent>
+          <TabsContent value="readings">
+            <RecentReadings />
+          </TabsContent>
+        </Tabs>
+      </DashboardShell>
+    </main>
   );
 }
