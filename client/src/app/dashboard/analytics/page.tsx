@@ -66,7 +66,7 @@ export default function AnalyticsPage() {
         <Select
           value={timeRange}
           onValueChange={setTimeRange}
-          className="w-full sm:w-[180px]"
+          // className="w-full sm:w-[180px]"
         >
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Select time range" />
