@@ -1,123 +1,36 @@
-# VoltSense - IoT Smart Switch with Real-Time Metrics and Control
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-VoltSense is an IoT-enabled smart switch that allows users to monitor power usage, control appliances remotely, and gain insights into energy consumption patterns. It includes a web dashboard and a mobile app for seamless user interaction.
+## Getting Started
 
-## Table of Contents
+First, run the development server:
 
-- [Overview](#overview)
-- [Features](#features)
-- [Hardware Components](#hardware-components)
-- [Software Components](#software-components)
-- [Setup and Installation](#setup-and-installation)
-- [Usage](#usage)
-- [Backend Server](#backend-server)
-- [ESP32 Firmware](#esp32-firmware)
-- [Frontend Application](#frontend-application)
-- [Google AI Integration](#google-ai-integration)
-- [Contributing](#contributing)
-- [License](#license)
-
-## Overview
-
-VoltSense aims to provide an affordable and scalable solution for smart energy management in households and small businesses. By leveraging IoT and cloud technologies, it empowers users with real-time data and actionable insights to promote energy conservation.
-
-## Features
-
-- Real-time monitoring of power usage.
-- Remote control of appliances.
-- Historical data visualization.
-- Energy-saving recommendations.
-- Carbon footprint tracking.
-- Google AI-powered insights and anomaly detection.
-- Web dashboard and mobile app for device management.
-
-## Hardware Components
-
-- **ESP32 Microcontroller**: For managing IoT functionalities.
-- **ACS712 Current Sensor**: To measure current flow.
-- **Relay Module**: To control the connected appliances.
-- **Voltage Regulator**: To power the ESP32 and peripherals.
-- **Enclosure**: Fireproof casing for safety.
-
-## Software Components
-
-- **Backend**: Express.js server handling MQTT messages and database interactions.
-- **Frontend**: Next.js for the web dashboard.
-- **MQTT Broker**: Hosted on Google Cloud VM.
-- **Database**: Firebase Firestore for storing user data and metrics.
-- **Mobile App**: Flutter-based app for mobile control and insights.
-
-## Setup and Installation
-
-### 1. Clone the Repository
 ```bash
-git clone https://github.com/yourusername/voltsense.git
-cd voltsense
-```
-
-### 2. Setting up the Backend
-Navigate to the `server` directory and install dependencies:
-```
-cd server
-npm install
-```
-
-Start the Express server:
-```
-npm start
-```
-
-### 3. Setting Up the Frontend
-Navigate to the `client` directory and install dependencies:
-```
-cd client
-npm install
-```
-Start the Next.js application:
-```
 npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
 ```
 
-### 4. Configuring the ESP32
-Flash the provided firmware onto the ESP32 to start sending MQTT messages to the broker.
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-## Usage
-1. Web Dashboard: Access the web dashboard at http://localhost:3000 to monitor and control connected appliances.
-2. Mobile App: Install the Flutter app on your mobile device for remote management.
-3. MQTT Broker: Ensure the MQTT broker is running on your Google Cloud VM and accessible from your network.
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-## Backend Server
-The backend is built using Express.js and handles the following:
-- Connecting to the MQTT broker to receive messages.
-- Storing and retrieving data from Firebase Firestore.
-- Exposing APIs for the frontend to fetch real-time and historical data.
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-## API Endpoints
-- `GET /message`: Fetches the latest MQTT message.
-- `POST /control`: Sends control commands to the ESP32.
+## Learn More
 
-## ESP32 Firmware
-The ESP32 firmware is programmed to:
-- Connect to the specified MQTT broker.
-- Publish power usage data to the esp32/messages topic.
-- Listen for control commands on the esp32/control topic.
+To learn more about Next.js, take a look at the following resources:
 
-## Frontend Application
-The frontend is a Next.js application that:
-- Provides a user-friendly interface for monitoring and controlling appliances.
-- Visualizes power usage data and insights.
-- Fetches data from the Express backend through REST APIs.
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-## Google AI Integration
-The project integrates with Google AI to:
-- Analyze power usage data.
-- Provide insights into energy consumption patterns.
-- Detect anomalies and suggest energy-saving practices.
+## Deploy on Vercel
 
-## Contributing
-Contributions are welcome! Please fork the repository and create a pull request with your changes. Ensure that your code adheres to the project's coding standards and includes relevant tests.
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
-## License
-This project is licensed under the MIT License. See the LICENSE file for more details.
-
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
