@@ -127,10 +127,10 @@ export default function LandingPage() {
             transition={{ duration: 0.7, delay: 0.2 }}
           >
             Monitor Your Power
-            {/* <span className="text-blue-600 dark:text-blue-500">
+            <span className="text-blue-600 dark:text-blue-500">
               {" "}
               in Real-Time
-            </span> */}
+            </span>
           </motion.h1>
           <motion.p
             className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto mb-8"
