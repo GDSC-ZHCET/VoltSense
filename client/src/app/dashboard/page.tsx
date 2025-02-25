@@ -13,10 +13,23 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  Legend,
 } from "recharts";
-import type React from "react"; // Added import for React
+import { Power } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { db } from "@/lib/firebaseConfig"; // Import Firebase configuration
+import { collection, addDoc } from "firebase/firestore"; // Firestore functions
 
-// Consolidated components
+// Define the structure of the sensor data
+interface SensorData {
+  device_id: string;
+  timestamp: string;
+  voltage: number;
+  current: number;
+  power: number;
+  status: boolean;
+}
+
 function DashboardHeader({
   heading,
   text,
@@ -41,18 +54,104 @@ function DashboardShell({ children }: { children: React.ReactNode }) {
   return <div className="grid items-start gap-8">{children}</div>;
 }
 
-function Overview() {
-  const mockData = [
-    { timestamp: 1, voltage: 220, current: 5, power: 1100 },
-    { timestamp: 2, voltage: 221, current: 5.1, power: 1127.1 },
-    { timestamp: 3, voltage: 219, current: 4.9, power: 1073.1 },
-    { timestamp: 4, voltage: 220, current: 5, power: 1100 },
-    { timestamp: 5, voltage: 222, current: 5.2, power: 1154.4 },
-  ];
+function Overview({ data }: { data: SensorData[] }) {
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white p-4 shadow-lg rounded-lg border">
+          <p className="font-bold">{`Time: ${label}`}</p>
+          {payload.map((entry: any, index: number) => (
+            <p key={index} style={{ color: entry.color }}>
+              {`${entry.name}: ${entry.value}${
+                entry.name === "Voltage"
+                  ? "V"
+                  : entry.name === "Current"
+                  ? "A"
+                  : "W"
+              }`}
+            </p>
+          ))}
+        </div>
+      );
+    }
+    return null;
+  };
+
+  const chartConfig = {
+    voltage: {
+      color: "#8884d8",
+      label: "Voltage (V)",
+      dataKey: "voltage",
+    },
+    current: {
+      color: "#82ca9d",
+      label: "Current (A)",
+      dataKey: "current",
+    },
+    power: {
+      color: "#ffc658",
+      label: "Power (W)",
+      dataKey: "power",
+    },
+  };
+
+  const ResponsiveChart = ({
+    type,
+  }: {
+    type: "voltage" | "current" | "power";
+  }) => {
+    const config = chartConfig[type];
+
+    return (
+      <div className="w-full mt-6">
+        <ResponsiveContainer width="100%" height={350} minWidth={300}>
+          <LineChart
+            data={data}
+            margin={{
+              top: 5,
+              right: 30,
+              left: 50,
+              bottom: 50,
+            }}
+          >
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis
+              dataKey="timestamp"
+              height={50}
+              label={{
+                value: "Time (hours)",
+                position: "bottom",
+                offset: 20,
+              }}
+            />
+            <YAxis
+              width={70}
+              label={{
+                value: config.label,
+                angle: -90,
+                position: "insideLeft",
+                offset: -20,
+              }}
+            />
+            <Tooltip content={<CustomTooltip />} />
+            <Legend verticalAlign="top" height={36} />
+            <Line
+              type="monotone"
+              dataKey={config.dataKey}
+              name={config.label.split(" ")[0]}
+              stroke={config.color}
+              strokeWidth={2}
+              dot={{ r: 4 }}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+    );
+  };
 
   return (
     <Tabs defaultValue="voltage" className="col-span-4">
-      <TabsList>
+      <TabsList className="grid w-full grid-cols-3 lg:w-[400px]">
         <TabsTrigger value="voltage">Voltage</TabsTrigger>
         <TabsTrigger value="current">Current</TabsTrigger>
         <TabsTrigger value="power">Power</TabsTrigger>
@@ -60,54 +159,30 @@ function Overview() {
       <TabsContent value="voltage">
         <Card>
           <CardHeader>
-            <CardTitle>Voltage</CardTitle>
+            <CardTitle>Voltage Over Time</CardTitle>
           </CardHeader>
-          <CardContent className="pl-2">
-            <ResponsiveContainer width="100%" height={350}>
-              <LineChart data={mockData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="timestamp" />
-                <YAxis />
-                <Tooltip />
-                <Line type="monotone" dataKey="voltage" stroke="#8884d8" />
-              </LineChart>
-            </ResponsiveContainer>
+          <CardContent>
+            <ResponsiveChart type="voltage" />
           </CardContent>
         </Card>
       </TabsContent>
       <TabsContent value="current">
         <Card>
           <CardHeader>
-            <CardTitle>Current</CardTitle>
+            <CardTitle>Current Over Time</CardTitle>
           </CardHeader>
-          <CardContent className="pl-2">
-            <ResponsiveContainer width="100%" height={350}>
-              <LineChart data={mockData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="timestamp" />
-                <YAxis />
-                <Tooltip />
-                <Line type="monotone" dataKey="current" stroke="#82ca9d" />
-              </LineChart>
-            </ResponsiveContainer>
+          <CardContent>
+            <ResponsiveChart type="current" />
           </CardContent>
         </Card>
       </TabsContent>
       <TabsContent value="power">
         <Card>
           <CardHeader>
-            <CardTitle>Power</CardTitle>
+            <CardTitle>Power Over Time</CardTitle>
           </CardHeader>
-          <CardContent className="pl-2">
-            <ResponsiveContainer width="100%" height={350}>
-              <LineChart data={mockData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="timestamp" />
-                <YAxis />
-                <Tooltip />
-                <Line type="monotone" dataKey="power" stroke="#ffc658" />
-              </LineChart>
-            </ResponsiveContainer>
+          <CardContent>
+            <ResponsiveChart type="power" />
           </CardContent>
         </Card>
       </TabsContent>
@@ -115,13 +190,7 @@ function Overview() {
   );
 }
 
-function RecentReadings() {
-  const mockReadings = [
-    { timestamp: 1625097600000, voltage: 220, current: 5, power: 1100 },
-    { timestamp: 1625184000000, voltage: 221, current: 5.1, power: 1127.1 },
-    { timestamp: 1625270400000, voltage: 219, current: 4.9, power: 1073.1 },
-  ];
-
+function RecentReadings({ data }: { data: SensorData[] }) {
   return (
     <Card className="col-span-4">
       <CardHeader>
@@ -129,8 +198,8 @@ function RecentReadings() {
       </CardHeader>
       <CardContent>
         <div className="space-y-8">
-          {mockReadings.map((reading) => (
-            <div key={reading.timestamp} className="flex items-center">
+          {data.map((reading, index) => (
+            <div key={index} className="flex items-center">
               <div className="ml-4 space-y-1">
                 <p className="text-sm font-medium leading-none">
                   {new Date(reading.timestamp).toLocaleString()}
@@ -149,6 +218,78 @@ function RecentReadings() {
 }
 
 export default function DashboardPage() {
+  const [sensorData, setSensorData] = useState<SensorData[]>([]);
+
+  // Calculate total power consumption (in kWh)
+  const totalPowerConsumption =
+    sensorData.reduce((total, data) => total + data.power, 0) / 1000;
+
+  // Calculate current power (in kW)
+  const currentPower =
+    sensorData.length > 0 ? sensorData[sensorData.length - 1].power / 1000 : 0;
+
+  // Calculate average voltage
+  const averageVoltage =
+    sensorData.length > 0
+      ? sensorData.reduce((total, data) => total + data.voltage, 0) /
+        sensorData.length
+      : 0;
+
+  // Calculate percentage change in power consumption (compared to the previous reading)
+  const powerChangePercentage =
+    sensorData.length > 1
+      ? ((sensorData[sensorData.length - 1].power -
+          sensorData[sensorData.length - 2].power) /
+          sensorData[sensorData.length - 2].power) *
+        100
+      : 0;
+
+  useEffect(() => {
+    // Connect to WebSocket server
+    const ws = new WebSocket("ws://192.168.1.14:8080");
+
+    ws.onmessage = async (event) => {
+      console.log("Received raw message:", event.data);
+
+      try {
+        // Parse the message as JSON
+        const newData = JSON.parse(event.data);
+
+        // Add timestamp to the data
+        newData.timestamp = new Date().toISOString();
+
+        // Update state for UI
+        setSensorData((prevData) => [...prevData, newData]);
+
+        // Store data in Firebase Firestore
+        try {
+          const docRef = await addDoc(collection(db, "sensorData"), newData);
+          console.log("Data stored in Firestore with ID:", docRef.id);
+        } catch (error) {
+          console.error("Error storing data in Firestore:", error);
+        }
+      } catch (error) {
+        console.error("Failed to parse WebSocket message as JSON:", error);
+      }
+    };
+
+    ws.onopen = () => {
+      console.log("Connected to WebSocket server");
+    };
+
+    ws.onerror = (error) => {
+      console.error("WebSocket error:", error);
+    };
+
+    ws.onclose = () => {
+      console.log("WebSocket connection closed");
+    };
+
+    return () => {
+      ws.close();
+    };
+  }, []);
+
   return (
     <main className="flex flex-col">
       <DashboardShell>
@@ -172,9 +313,11 @@ export default function DashboardPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">45.2 kWh</div>
+                  <div className="text-2xl font-bold">
+                    {totalPowerConsumption.toFixed(2)} kWh
+                  </div>
                   <p className="text-xs text-muted-foreground">
-                    +20.1% from last month
+                    {powerChangePercentage.toFixed(1)}% from last reading
                   </p>
                 </CardContent>
               </Card>
@@ -185,9 +328,11 @@ export default function DashboardPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">1.2 kW</div>
+                  <div className="text-2xl font-bold">
+                    {currentPower.toFixed(2)} kW
+                  </div>
                   <p className="text-xs text-muted-foreground">
-                    +7% from average
+                    {powerChangePercentage.toFixed(1)}% from average
                   </p>
                 </CardContent>
               </Card>
@@ -196,28 +341,41 @@ export default function DashboardPage() {
                   <CardTitle className="text-sm font-medium">Voltage</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">220 V</div>
+                  <div className="text-2xl font-bold">
+                    {averageVoltage.toFixed(2)} V
+                  </div>
                   <p className="text-xs text-muted-foreground">Stable</p>
                 </CardContent>
               </Card>
-              <Card>
+              <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Device Status
+                  <CardTitle className="text-sm font-medium flex items-center gap-2">
+                    <Power className="w-4 h-4" />
+                    Device Control
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-center space-x-2">
-                    <Switch id="device-status" />
-                    <Label htmlFor="device-status">On</Label>
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                      <Label
+                        htmlFor="device-status"
+                        className="text-lg font-semibold"
+                      >
+                        Power
+                      </Label>
+                      <Switch id="device-status" className="scale-125" />
+                    </div>
+                    <p className="text-xs text-blue-600 font-medium">
+                      Device is currently ON
+                    </p>
                   </div>
                 </CardContent>
               </Card>
             </div>
-            <Overview />
+            <Overview data={sensorData} />
           </TabsContent>
           <TabsContent value="readings">
-            <RecentReadings />
+            <RecentReadings data={sensorData} />
           </TabsContent>
         </Tabs>
       </DashboardShell>

@@ -1,33 +1,31 @@
-// const app = require("./app");
-// const dotenv = require("dotenv").config();
-
-// const PORT = process.env.PORT || 3001;
-
-// app.listen(PORT, () => {
-//   console.log(`Server running on http://localhost:${PORT}`);
-// });
-
 const WebSocket = require("ws");
-
-const wss = new WebSocket.Server({ port: 3001 });
+const wss = new WebSocket.Server({ port: 8080 });
 
 wss.on("connection", (ws) => {
-  console.log("ESP32 connected via WebSocket");
+  console.log("Client connected");
 
   ws.on("message", (message) => {
-    console.log("Received:", message);
+    console.log(`Received raw message: ${message}`);
 
-    // Broadcast data to all connected clients (Dashboard)
-    wss.clients.forEach((client) => {
-      if (client !== ws && client.readyState === WebSocket.OPEN) {
-        client.send(message);
-      }
-    });
+    try {
+      // Attempt to parse the message as JSON
+      const parsedMessage = JSON.parse(message);
+      console.log("Parsed message:", parsedMessage);
+
+      // Broadcast the parsed JSON to all connected clients
+      wss.clients.forEach((client) => {
+        if (client !== ws && client.readyState === WebSocket.OPEN) {
+          client.send(JSON.stringify(parsedMessage)); // Send as JSON string
+        }
+      });
+    } catch (error) {
+      console.error("Invalid JSON received:", error);
+    }
   });
 
   ws.on("close", () => {
-    console.log("ESP32 disconnected");
+    console.log("Client disconnected");
   });
 });
 
-console.log("WebSocket Server running on ws://localhost:3001");
+console.log("WebSocket server is running on ws://localhost:8080");
