@@ -278,7 +278,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     // Connect to WebSocket server
-    const ws = new WebSocket("ws://192.168.1.14:8080");
+    const ws = new WebSocket("ws://192.168.1.14:5000");
 
     ws.onmessage = async (event) => {
       const newData = JSON.parse(event.data);
