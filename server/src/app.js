@@ -111,36 +111,6 @@ expressApp.post("/api/send-notification", async (req, res) => {
   }
 });
 
-// // Express API to send notifications
-// expressApp.post("/api/send-notification", async (req, res) => {
-//   const { tokens, notification } = req.body;
-
-//   try {
-//     const response = await admin.messaging().sendEachForMulticast({
-//       tokens, // Array of FCM tokens
-//       notification: {
-//         title: notification.title,
-//         body: notification.body,
-//       },
-//     });
-
-//     if (response.failureCount > 0) {
-//       const failedTokens = [];
-//       response.responses.forEach((resp, idx) => {
-//         if (!resp.success) {
-//           failedTokens.push(tokens[idx]);
-//         }
-//       });
-//       console.error("Failed to send notifications to tokens:", failedTokens);
-//     }
-
-//     res.status(200).json({ success: true, response });
-//   } catch (error) {
-//     console.error("Error sending notification:", error);
-//     res.status(500).json({ success: false, error: error.message });
-//   }
-// });
-
 // Start the server
 const PORT = process.env.PORT || 8080;
 server.listen(PORT, () => {

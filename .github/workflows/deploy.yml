@@ -1,47 +1,3 @@
-# name: Deploy to Cloud Run
-
-# on:
-#   push:
-#     branches:
-#       - master # Deploys only when changes are pushed to main
-
-# jobs:
-#   deploy:
-#     runs-on: ubuntu-latest
-
-#     steps:
-#       - name: Checkout Repository
-#         uses: actions/checkout@v4
-
-#       - name: Authenticate with Google Cloud
-#         uses: google-github-actions/auth@v2
-#         with:
-#           credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
-
-#       - name: Set Up Google Cloud SDK
-#         uses: google-github-actions/setup-gcloud@v2
-
-#       - name: Build and Push Docker Image
-#         run: |
-#           cd client
-#           gcloud auth configure-docker gcr.io
-#           docker build --platform linux/amd64 -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.CLOUD_RUN_SERVICE_NAME }} .
-#           docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.CLOUD_RUN_SERVICE_NAME }}
-
-#       - name: Deploy to Cloud Run
-#         run: |
-#           gcloud run deploy ${{ secrets.CLOUD_RUN_SERVICE_NAME }} \
-#             --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.CLOUD_RUN_SERVICE_NAME }} \
-#             --region ${{ secrets.CLOUD_RUN_REGION }} \
-#             --platform managed \
-#             --allow-unauthenticated
-#             --set-env-vars NEXT_PUBLIC_FIREBASE_API_KEY=${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }} \
-#             --set-env-vars NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=${{ secrets.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }} \
-#             --set-env-vars NEXT_PUBLIC_FIREBASE_PROJECT_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_PROJECT_ID }} \
-#             --set-env-vars NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=${{ secrets.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET }} \
-#             --set-env-vars NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }} \
-#             --set-env-vars NEXT_PUBLIC_FIREBASE_APP_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }}
-
 name: Deploy to Cloud Run
 
 on:
@@ -50,7 +6,7 @@ on:
       - master # Deploys when changes are pushed to master branch
 
 jobs:
-  deploy:
+  deploy-client:
     runs-on: ubuntu-latest
 
     steps:
@@ -88,3 +44,43 @@ jobs:
             --platform managed \
             --allow-unauthenticated \
             --set-env-vars NEXT_PUBLIC_FIREBASE_API_KEY=${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }},NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=${{ secrets.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }},NEXT_PUBLIC_FIREBASE_PROJECT_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_PROJECT_ID }},NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=${{ secrets.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET }},NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }},NEXT_PUBLIC_FIREBASE_APP_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }},NEXT_PUBLIC_FCM_KEY=${{ secrets.NEXT_PUBLIC_FCM_KEY }}
+
+  deploy-server:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Authenticate with Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+
+      - name: Set Up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Build and Push Server Docker Image
+        run: |
+          cd server
+          gcloud auth configure-docker gcr.io
+          docker build --platform linux/arm64 \
+            --build-arg FIREBASE_API_KEY=${{ secrets.FIREBASE_API_KEY }} \
+            --build-arg FIREBASE_AUTH_DOMAIN=${{ secrets.FIREBASE_AUTH_DOMAIN }} \
+            --build-arg FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }} \
+            --build-arg FIREBASE_STORAGE_BUCKET=${{ secrets.FIREBASE_STORAGE_BUCKET }} \
+            --build-arg FIREBASE_MESSAGING_SENDER_ID=${{ secrets.FIREBASE_MESSAGING_SENDER_ID }} \
+            --build-arg FIREBASE_APP_ID=${{ secrets.FIREBASE_APP_ID }} \
+            --build-arg FIREBASE_CLIENT_EMAIL=${{ secrets.FIREBASE_CLIENT_EMAIL }} \
+            --build-arg FIREBASE_PRIVATE_KEY=${{ secrets.FIREBASE_PRIVATE_KEY }} \
+            -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.CLOUD_RUN_SERVER_SERVICE }} .
+          docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.CLOUD_RUN_SERVER_SERVICE }}
+
+      - name: Deploy Server to Cloud Run
+        run: |
+          gcloud run deploy ${{ secrets.CLOUD_RUN_SERVER_SERVICE }} \
+            --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.CLOUD_RUN_SERVER_SERVICE }} \
+            --region ${{ secrets.CLOUD_RUN_REGION }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --set-env-vars FIREBASE_API_KEY=${{ secrets.FIREBASE_API_KEY }},FIREBASE_AUTH_DOMAIN=${{ secrets.FIREBASE_AUTH_DOMAIN }},FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }},FIREBASE_STORAGE_BUCKET=${{ secrets.FIREBASE_STORAGE_BUCKET }},FIREBASE_MESSAGING_SENDER_ID=${{ secrets.FIREBASE_MESSAGING_SENDER_ID }},FIREBASE_APP_ID=${{ secrets.FIREBASE_APP_ID }},FIREBASE_CLIENT_EMAIL=${{ secrets.FIREBASE_CLIENT_EMAIL }},FIREBASE_PRIVATE_KEY=${{ secrets.FIREBASE_PRIVATE_KEY }}

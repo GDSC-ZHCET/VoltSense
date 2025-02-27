@@ -72,8 +72,6 @@ interface Alert {
 
 export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname();
-  // const [alerts, setAlerts] = useState([]);
-  // const [displayedAlerts, setDisplayedAlerts] = useState([]);
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [displayedAlerts, setDisplayedAlerts] = useState<Alert[]>([]);
 
@@ -161,29 +159,6 @@ export function Sidebar({ className }: SidebarProps) {
       console.error("Error sending notification:", error);
     }
   };
-
-  // useEffect(() => {
-  //   const q = query(collection(db, "alerts"), orderBy("timestamp", "desc"));
-  //   const unsubscribe = onSnapshot(q, (snapshot) => {
-  //     const newAlerts = snapshot.docs.map((doc) => ({
-  //       id: doc.id,
-  //       ...(doc.data() as Alert),
-  //     }));
-
-  //     // Check if there are new unread alerts
-  //     if (
-  //       newAlerts.length > prevAlertCount &&
-  //       newAlerts.some((alert) => !alert.read)
-  //     ) {
-  //       setPlaySound(true);
-  //     }
-
-  //     setAlerts(newAlerts);
-  //     setDisplayedAlerts(newAlerts.filter((alert) => !alert.read));
-  //     setPrevAlertCount(newAlerts.length);
-  //   });
-  //   return () => unsubscribe();
-  // }, [prevAlertCount]); // Add prevAlertCount to dependency array
 
   useEffect(() => {
     const q = query(collection(db, "alerts"), orderBy("timestamp", "desc"));
