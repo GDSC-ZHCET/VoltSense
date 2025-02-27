@@ -1,6 +1,7 @@
 import { Navbar, NavbarBrand, NavbarContent, NavbarItem } from "@heroui/navbar";
 import Link from "next/link";
 import { Button } from "../ui/button";
+import Image from "next/image";
 
 export const VoltLogo = () => {
   return (
@@ -21,7 +22,13 @@ export default function Nav() {
   return (
     <Navbar className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white shadow-lg rounded-2xl px-8 py-4 w-[95%] max-w-6xl transition-all duration-300 z-10 hidden md:flex">
       <NavbarBrand className="flex items-center space-x-2">
-        <VoltLogo />
+        {/* <VoltLogo /> */}
+        <Image
+          src={"/voltsense.png"}
+          width={1080}
+          height={1080}
+          alt="voltsense-logo"
+        ></Image>
         <p className="font-bold text-white tracking-wide">Voltsense</p>
       </NavbarBrand>
       <NavbarContent

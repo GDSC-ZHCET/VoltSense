@@ -3,9 +3,23 @@
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Link } from "lucide-react";
+import { Link, Bell, AlertCircle, CheckCircle, Power, Zap } from "lucide-react";
 import { usePathname } from "next/navigation";
 import NextLink from "next/link";
+import { db } from "@/lib/firebaseConfig";
+import {
+  collection,
+  query,
+  orderBy,
+  onSnapshot,
+  addDoc,
+  updateDoc,
+  doc,
+} from "firebase/firestore";
+import { useEffect, useState } from "react";
+import { messaging } from "@/lib/firebaseConfig";
+import { getToken } from "firebase/messaging";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {}
 
@@ -49,12 +63,227 @@ const sidebarItems = [
 
 export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname();
+  const [alerts, setAlerts] = useState([]);
+  const [prevAlertCount, setPrevAlertCount] = useState(0);
+  const [playSound, setPlaySound] = useState(false);
+  const [displayedAlerts, setDisplayedAlerts] = useState([]);
+
+  const voltageThreshold = 225;
+  const currentThreshold = 5.9;
+  const powerThreshold = 1270;
+
+  const requestNotificationPermission = async () => {
+    if (!messaging) {
+      console.warn("FCM is not available in this environment.");
+      return;
+    }
+
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission === "granted") {
+        console.log("Notification permission granted.");
+        const token = await getToken(messaging, {
+          vapidKey: process.env.NEXT_PUBLIC_FCM_KEY,
+        });
+        console.log("FCM Token:", token);
+
+        const auth = getAuth();
+        onAuthStateChanged(auth, async (user) => {
+          if (user) {
+            console.log("User UID:", user.uid);
+            await saveTokenToBackend(user.uid, token); // ✅ Pass dynamic UID
+          } else {
+            console.warn("No user logged in. Cannot save FCM token.");
+          }
+        });
+      } else {
+        console.log("Notification permission denied.");
+      }
+    } catch (error) {
+      console.error("Error requesting notification permission:", error);
+    }
+  };
+
+  const saveTokenToBackend = async (userId: string, token: string) => {
+    try {
+      const response = await fetch("http://localhost:8080/api/save-token", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userId, token }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to save FCM token");
+      }
+
+      console.log("FCM token saved to backend");
+    } catch (error) {
+      console.error("Error saving FCM token:", error);
+    }
+  };
+
+  const sendNotification = async (message: string) => {
+    try {
+      const response = await fetch("http://localhost:8080/api/get-tokens");
+      const { tokens } = await response.json();
+
+      if (tokens.length === 0) {
+        console.warn("No FCM tokens available.");
+        return;
+      }
+
+      await fetch("http://localhost:8080/api/send-notification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tokens,
+          notification: {
+            title: "New Alert",
+            body: message,
+          },
+        }),
+      });
+    } catch (error) {
+      console.error("Error sending notification:", error);
+    }
+  };
+
+  useEffect(() => {
+    const q = query(collection(db, "alerts"), orderBy("timestamp", "desc"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const newAlerts = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      // Check if there are new unread alerts
+      if (
+        newAlerts.length > prevAlertCount &&
+        newAlerts.some((alert) => !alert.read)
+      ) {
+        setPlaySound(true);
+      }
+
+      setAlerts(newAlerts);
+      setDisplayedAlerts(newAlerts.filter((alert) => !alert.read));
+      setPrevAlertCount(newAlerts.length);
+    });
+    return () => unsubscribe();
+  }, [prevAlertCount]); // Add prevAlertCount to dependency array
+
+  useEffect(() => {
+    // Listen to your metrics collection (e.g., 'powerMetrics')
+    const metricsRef = collection(db, "sensorData");
+    const metricsQuery = query(metricsRef, orderBy("timestamp", "desc"));
+
+    const metricsUnsubscribe = onSnapshot(metricsQuery, async (snapshot) => {
+      if (snapshot.empty) return;
+
+      // Get the latest metrics
+      const latestMetric = snapshot.docs[0].data();
+      const timestamp = new Date();
+
+      // Check thresholds and create alerts if exceeded
+      if (latestMetric.voltage > voltageThreshold) {
+        const alertData = {
+          message: `Voltage threshold exceeded: ${latestMetric.voltage}V`,
+          timestamp: timestamp,
+          read: false,
+          type: "voltage",
+        };
+        await addDoc(collection(db, "alerts"), alertData);
+        await sendNotification(alertData.message); // Send notification
+      }
+
+      if (latestMetric.current > currentThreshold) {
+        const alertData = {
+          message: `Current threshold exceeded: ${latestMetric.current}A`,
+          timestamp: timestamp,
+          read: false,
+          type: "current",
+        };
+        await addDoc(collection(db, "alerts"), alertData);
+        await sendNotification(alertData.message); // Send notification
+      }
+
+      if (latestMetric.power > powerThreshold) {
+        const alertData = {
+          message: `Power threshold exceeded: ${latestMetric.power}W`,
+          timestamp: timestamp,
+          read: false,
+          type: "power",
+        };
+        await addDoc(collection(db, "alerts"), alertData);
+        // await sendNotification(alertData.message); // Send notification
+      }
+    });
+
+    return () => metricsUnsubscribe();
+  }, [voltageThreshold, currentThreshold, powerThreshold]);
+
+  useEffect(() => {
+    if (playSound) {
+      try {
+        const audio = new Audio("/assets/alert.mp3");
+        audio.play().catch((error) => {
+          console.error("Error playing alert sound:", error);
+        });
+      } catch (error) {
+        console.error("Failed to play alert sound:", error);
+      }
+      setPlaySound(false);
+    }
+  }, [playSound]);
+
+  useEffect(() => {
+    requestNotificationPermission();
+  }, []);
+
+  // Function to remove all alerts
+  const clearAllAlerts = async () => {
+    try {
+      // Update all alerts to read status in Firestore
+      const promises = displayedAlerts.map((alert) =>
+        updateDoc(doc(db, "alerts", alert.id), { read: true })
+      );
+      await Promise.all(promises);
+
+      // Clear the displayed alerts
+      setDisplayedAlerts([]);
+    } catch (error) {
+      console.error("Error clearing all alerts:", error);
+    }
+  };
+
+  const markAsRead = async (id) => {
+    try {
+      // Update the document in Firestore
+      await updateDoc(doc(db, "alerts", id), { read: true });
+
+      // Remove the alert from the displayed alerts
+      setDisplayedAlerts((prevDisplayedAlerts) =>
+        prevDisplayedAlerts.filter((alert) => alert.id !== id)
+      );
+    } catch (error) {
+      console.error("Error marking alert as read:", error);
+    }
+  };
+  const getAlertIcon = (message: string) => {
+    if (message.includes("Voltage"))
+      return <Zap className="h-5 w-5 text-yellow-500" />;
+    if (message.includes("Current"))
+      return <Power className="h-5 w-5 text-blue-500" />;
+    if (message.includes("Power"))
+      return <AlertCircle className="h-5 w-5 text-red-500" />;
+    return <CheckCircle className="h-5 w-5 text-green-500" />;
+  };
 
   return (
     <div className={cn("pb-12", className)}>
       <div className="space-y-4 py-4">
         <div className="px-4 py-2">
-          {/* <h2 className="mb-2 px-2 text-lg font-semibold">Smart Switch</h2> */}
           <div className="space-y-1">
             {sidebarItems.map((item) => (
               <NextLink key={item.href} href={item.href}>
@@ -80,6 +309,60 @@ export function Sidebar({ className }: SidebarProps) {
             ))}
           </div>
         </div>
+      </div>
+
+      {/* Notifications Section */}
+      <div className="px-4 py-2 border-t border-gray-300">
+        <h3 className="text-lg font-semibold flex items-center gap-2">
+          <Bell className="h-6 w-6 text-gray-600" /> Notifications
+          {displayedAlerts.filter((alert) => !alert.read).length > 0 && (
+            <span className="bg-red-500 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center">
+              {displayedAlerts.filter((alert) => !alert.read).length > 99
+                ? "99+"
+                : displayedAlerts.filter((alert) => !alert.read).length}
+            </span>
+          )}
+        </h3>
+        {displayedAlerts.length > 0 && (
+          <button
+            onClick={clearAllAlerts}
+            className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+          >
+            Clear All
+          </button>
+        )}
+        <ScrollArea className="h-64 mt-2">
+          <div className="space-y-2">
+            {displayedAlerts.length === 0 ? (
+              <p className="text-sm text-gray-500">No new alerts</p>
+            ) : (
+              displayedAlerts.map((alert) => (
+                <div
+                  key={alert.id}
+                  className={`flex items-center gap-3 p-3 border rounded shadow-md transition-all duration-300 hover:bg-gray-100 ${
+                    !alert.read ? "bg-blue-50 border-blue-200" : "bg-white"
+                  }`}
+                >
+                  {getAlertIcon(alert.message)}
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">{alert.message}</p>
+                    <p className="text-xs text-gray-400">
+                      {new Date(alert.timestamp?.toDate()).toLocaleString()}
+                    </p>
+                  </div>
+                  {!alert.read && (
+                    <button
+                      className="text-blue-500 text-xs font-bold"
+                      onClick={() => markAsRead(alert.id)}
+                    >
+                      Mark as Read
+                    </button>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        </ScrollArea>
       </div>
     </div>
   );
