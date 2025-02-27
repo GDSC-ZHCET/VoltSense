@@ -1,7 +1,6 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -182,18 +181,16 @@ function Overview({ data }: { data: SensorData[] }) {
               strokeWidth={2}
               connectNulls={false} // Ensure the line breaks when there's no data
               dot={({ cx, cy, payload }) => {
+                if (!cx || !cy || !payload) return <></>; // Ensure cx, cy, and payload exist
+
                 // Highlight peak value with a different color
-                if (payload.timestamp === peakPoint?.timestamp) {
+                if (peakPoint && payload.timestamp === peakPoint.timestamp) {
                   return (
                     <circle cx={cx} cy={cy} r={6} fill="red" stroke="black" />
                   );
                 }
-                // Only show dots for non-zero values
-                if (payload[config.dataKey] > 0) {
-                  return <circle cx={cx} cy={cy} r={4} fill={config.color} />;
-                }
-                // Return null for zero values to not show a dot
-                return null;
+
+                return <circle cx={cx} cy={cy} r={4} fill={config.color} />;
               }}
               isAnimationActive={false} // Disable line animation
             />
