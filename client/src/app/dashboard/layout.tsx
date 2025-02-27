@@ -4,7 +4,6 @@ import { useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 import { Sidebar } from "@/components/sidebar";
-import Nav from "@/components/layout/navbar";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -12,9 +11,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col px-2">
       <header className="sticky top-0 z-40 border-b bg-background">
-        {/* <Nav /> */}
         <div className="container flex h-16 items-center justify-between sm:hidden">
-          {/* <h1 className="text-2xl font-bold">Smart Switch Dashboard</h1> */}
           <Button
             variant="ghost"
             className="sm:hidden"
