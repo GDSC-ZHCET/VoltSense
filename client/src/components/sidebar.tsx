@@ -3,7 +3,7 @@
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Link, Bell, AlertCircle, CheckCircle, Power, Zap } from "lucide-react";
+import { Bell, AlertCircle, CheckCircle, Power, Zap } from "lucide-react";
 import { usePathname } from "next/navigation";
 import NextLink from "next/link";
 import { db } from "@/lib/firebaseConfig";
@@ -20,6 +20,7 @@ import { useEffect, useState } from "react";
 import { messaging } from "@/lib/firebaseConfig";
 import { getToken } from "firebase/messaging";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { Timestamp } from "firebase/firestore"; // ✅ Import Timestamp type
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {}
 
@@ -61,12 +62,23 @@ const sidebarItems = [
   },
 ];
 
+interface Alert {
+  id: string;
+  message: string;
+  timestamp: Timestamp; // ✅ Use Timestamp type
+  read?: boolean; // ✅ Fix: Add 'read' as an optional property
+  type?: string;
+}
+
 export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname();
-  const [alerts, setAlerts] = useState([]);
+  // const [alerts, setAlerts] = useState([]);
+  // const [displayedAlerts, setDisplayedAlerts] = useState([]);
+  const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [displayedAlerts, setDisplayedAlerts] = useState<Alert[]>([]);
+
   const [prevAlertCount, setPrevAlertCount] = useState(0);
   const [playSound, setPlaySound] = useState(false);
-  const [displayedAlerts, setDisplayedAlerts] = useState([]);
 
   const voltageThreshold = 225;
   const currentThreshold = 5.9;
@@ -150,13 +162,36 @@ export function Sidebar({ className }: SidebarProps) {
     }
   };
 
+  // useEffect(() => {
+  //   const q = query(collection(db, "alerts"), orderBy("timestamp", "desc"));
+  //   const unsubscribe = onSnapshot(q, (snapshot) => {
+  //     const newAlerts = snapshot.docs.map((doc) => ({
+  //       id: doc.id,
+  //       ...(doc.data() as Alert),
+  //     }));
+
+  //     // Check if there are new unread alerts
+  //     if (
+  //       newAlerts.length > prevAlertCount &&
+  //       newAlerts.some((alert) => !alert.read)
+  //     ) {
+  //       setPlaySound(true);
+  //     }
+
+  //     setAlerts(newAlerts);
+  //     setDisplayedAlerts(newAlerts.filter((alert) => !alert.read));
+  //     setPrevAlertCount(newAlerts.length);
+  //   });
+  //   return () => unsubscribe();
+  // }, [prevAlertCount]); // Add prevAlertCount to dependency array
+
   useEffect(() => {
     const q = query(collection(db, "alerts"), orderBy("timestamp", "desc"));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const newAlerts = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
+      const newAlerts: Alert[] = snapshot.docs.map((doc) => {
+        const data = doc.data() as Omit<Alert, "id">; // ✅ Exclude 'id' from data
+        return { id: doc.id, ...data }; // ✅ Ensure 'id' is only assigned once
+      });
 
       // Check if there are new unread alerts
       if (
@@ -170,8 +205,9 @@ export function Sidebar({ className }: SidebarProps) {
       setDisplayedAlerts(newAlerts.filter((alert) => !alert.read));
       setPrevAlertCount(newAlerts.length);
     });
+
     return () => unsubscribe();
-  }, [prevAlertCount]); // Add prevAlertCount to dependency array
+  }, [prevAlertCount]);
 
   useEffect(() => {
     // Listen to your metrics collection (e.g., 'powerMetrics')
@@ -257,7 +293,7 @@ export function Sidebar({ className }: SidebarProps) {
     }
   };
 
-  const markAsRead = async (id) => {
+  const markAsRead = async (id: string) => {
     try {
       // Update the document in Firestore
       await updateDoc(doc(db, "alerts", id), { read: true });
