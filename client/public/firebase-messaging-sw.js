@@ -16,7 +16,7 @@ self.addEventListener("message", (event) => {
       const notificationTitle = payload.notification.title;
       const notificationOptions = {
         body: payload.notification.body,
-        icon: "/logo.png",
+        icon: "/voltsense.png",
       };
 
       self.registration.showNotification(notificationTitle, notificationOptions);
