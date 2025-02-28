@@ -116,13 +116,17 @@ export function Sidebar({ className }: SidebarProps) {
 
   const saveTokenToBackend = async (userId: string, token: string) => {
     try {
-      const response = await fetch("http://localhost:8080/api/save-token", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ userId, token }),
-      });
+      const response = await fetch(
+        "https://voltsense-server-110999938896.asia-south1.run.app/api/save-token",
+        {
+          // const response = await fetch("http://localhost:8080/api/save-token", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ userId, token }),
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to save FCM token");
@@ -136,7 +140,10 @@ export function Sidebar({ className }: SidebarProps) {
 
   const sendNotification = async (message: string) => {
     try {
-      const response = await fetch("http://localhost:8080/api/get-tokens");
+      const response = await fetch(
+        "https://voltsense-server-110999938896.asia-south1.run.app/api/get-tokens"
+      );
+      // const response = await fetch("http://localhost:8080/api/get-tokens");
       const { tokens } = await response.json();
 
       if (tokens.length === 0) {
@@ -144,17 +151,21 @@ export function Sidebar({ className }: SidebarProps) {
         return;
       }
 
-      await fetch("http://localhost:8080/api/send-notification", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          tokens,
-          notification: {
-            title: "New Alert",
-            body: message,
-          },
-        }),
-      });
+      await fetch(
+        "https://voltsense-server-110999938896.asia-south1.run.app/api/send-notification",
+        {
+          // await fetch("http://localhost:8080/api/send-notification", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            tokens,
+            notification: {
+              title: "New Alert",
+              body: message,
+            },
+          }),
+        }
+      );
     } catch (error) {
       console.error("Error sending notification:", error);
     }
