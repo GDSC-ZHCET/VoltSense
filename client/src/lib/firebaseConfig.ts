@@ -18,13 +18,33 @@ const db = getFirestore(app);
 
 let messaging: Messaging | null = null;
 if (typeof window !== "undefined") {
-  isSupported().then((supported) => {
-    if (supported) {
-      messaging = getMessaging(app);
-    } else {
-      console.warn("FCM is not supported in this browser.");
-    }
-  });
+  isSupported()
+    .then(async (supported) => {
+      if (supported) {
+        try {
+          const registration = await navigator.serviceWorker.register(
+            "/firebase-messaging-sw.js"
+          );
+
+          console.log("Service Worker registered:", registration);
+
+          // ✅ Send Firebase config to the service worker
+          registration.active?.postMessage({
+            type: "INIT_FIREBASE",
+            firebaseConfig,
+          });
+
+          messaging = getMessaging(app);
+        } catch (error) {
+          console.error("Failed to register service worker:", error);
+        }
+      } else {
+        console.warn("FCM is not supported in this browser.");
+      }
+    })
+    .catch((error) => {
+      console.error("Error checking FCM support:", error);
+    });
 }
 
 export { auth, db, messaging };

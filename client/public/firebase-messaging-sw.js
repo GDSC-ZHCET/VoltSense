@@ -1,25 +1,25 @@
-importScripts(
-  "https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"
-);
-importScripts(
-  "https://www.gstatic.com/firebasejs/9.6.10/firebase-messaging-compat.js"
-);
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "INIT_FIREBASE") {
+    const firebaseConfig = event.data.firebaseConfig;
 
-const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-};
+    // Import Firebase scripts
+    importScripts("https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js");
+    importScripts("https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js");
 
-firebase.initializeApp(firebaseConfig);
-const messaging = firebase.messaging();
+    firebase.initializeApp(firebaseConfig);
 
-// Handle background messages
-messaging.onBackgroundMessage((payload) => {
-  console.log("Received background message:", payload);
-  const { title, body } = payload.notification;
-  self.registration.showNotification(title, { body });
+    const messaging = firebase.messaging();
+
+    messaging.onBackgroundMessage((payload) => {
+      console.log("Received background message:", payload);
+
+      const notificationTitle = payload.notification.title;
+      const notificationOptions = {
+        body: payload.notification.body,
+        icon: "/logo.png",
+      };
+
+      self.registration.showNotification(notificationTitle, notificationOptions);
+    });
+  }
 });
