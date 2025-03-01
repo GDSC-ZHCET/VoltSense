@@ -103,17 +103,6 @@ export default function SetupPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label htmlFor="deviceName">Device Name</Label>
-              <Input
-                id="deviceName"
-                type="text"
-                value={deviceName}
-                onChange={(e) => setDeviceName(e.target.value)}
-                placeholder="Enter a name for your device"
-                required
-              />
-            </div>
-            <div>
               <Label htmlFor="ssid">Wi-Fi Network</Label>
               <div className="flex space-x-2">
                 <Select onValueChange={(value) => setSSID(value)}>
