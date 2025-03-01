@@ -17,7 +17,17 @@ import {
 import { Power } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { db } from "@/lib/firebaseConfig"; // Import Firebase configuration
-import { collection, query, orderBy, getDocs, where } from "firebase/firestore"; // Firestore functions
+import {
+  collection,
+  query,
+  orderBy,
+  getDocs,
+  where,
+  doc,
+  getDoc,
+  updateDoc,
+  setDoc,
+} from "firebase/firestore"; // Firestore functions
 
 import {
   Select,
@@ -271,8 +281,45 @@ function RecentReadings({ data }: { data: SensorData[] }) {
 export default function DashboardPage() {
   const [sensorData, setSensorData] = useState<SensorData[]>([]);
   const [totalPowerConsumed, setTotalPowerConsumed] = useState<number>(0);
-
+  const [deviceStatus, setDeviceStatus] = useState<boolean>(false); // Device status (on/off)
+  const [ws, setWs] = useState<WebSocket | null>(null); // WebSocket instance
   const [timeframe, setTimeframe] = useState("real-time"); // Default to real-time (last 10 readings)
+
+  // Initialize the device document in Firestore if it doesn't exist
+  useEffect(() => {
+    const initializeDeviceDocument = async () => {
+      const deviceDocRef = doc(db, "devices", "ESP32_TEST_DEVICE"); // Replace with your device ID
+
+      // Check if the document exists
+      const deviceDoc = await getDoc(deviceDocRef);
+      if (!deviceDoc.exists()) {
+        // Create the document with default values
+        await setDoc(deviceDocRef, {
+          device_id: "ESP32_TEST_DEVICE",
+          status: "off", // Default status
+          last_updated: new Date().toISOString(),
+        });
+        console.log("Device document created in Firestore.");
+      } else {
+        console.log("Device document already exists.");
+      }
+    };
+
+    initializeDeviceDocument();
+  }, []);
+
+  // Fetch device status from Firestore
+  useEffect(() => {
+    const fetchDeviceStatus = async () => {
+      const deviceDocRef = doc(db, "devices", "ESP32_TEST_DEVICE"); // Replace with your device ID
+      const deviceDoc = await getDoc(deviceDocRef);
+      if (deviceDoc.exists()) {
+        setDeviceStatus(deviceDoc.data().status === "on");
+      }
+    };
+
+    fetchDeviceStatus();
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -378,9 +425,10 @@ export default function DashboardPage() {
   // Connect to WebSocket for real-time updates
   useEffect(() => {
     const ws = new WebSocket(
+      // "ws://localhost:8080"
       "wss://voltsense-server-110999938896.asia-south1.run.app"
     );
-    // const ws = new WebSocket("ws://localhost:8080");
+    setWs(ws);
 
     ws.onmessage = (event) => {
       const newData = JSON.parse(event.data);
@@ -417,6 +465,24 @@ export default function DashboardPage() {
       ws.close();
     };
   }, []);
+
+  // Handle device status toggle
+  const handleToggleDeviceStatus = async (checked: boolean) => {
+    const deviceDocRef = doc(db, "devices", "ESP32_TEST_DEVICE"); // Replace with your device ID
+    await updateDoc(deviceDocRef, {
+      status: checked ? "on" : "off",
+      last_updated: new Date().toISOString(),
+    });
+
+    // Send WebSocket message to ESP32
+    if (ws) {
+      ws.send(
+        JSON.stringify({ device_id: "ESP32_TEST_DEVICE", status: checked })
+      );
+    }
+
+    setDeviceStatus(checked);
+  };
 
   // Calculate current power (in kW)
   const currentPower =
@@ -545,10 +611,15 @@ export default function DashboardPage() {
                       >
                         Power
                       </Label>
-                      <Switch id="device-status" className="scale-125" />
+                      <Switch
+                        id="device-status"
+                        className="scale-125"
+                        checked={deviceStatus}
+                        onCheckedChange={handleToggleDeviceStatus}
+                      />
                     </div>
                     <p className="text-xs text-blue-600 font-medium">
-                      Device is currently ON
+                      Device is currently {deviceStatus ? "ON" : "OFF"}
                     </p>
                   </div>
                 </CardContent>
