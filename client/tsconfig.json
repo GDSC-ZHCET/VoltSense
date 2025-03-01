@@ -27,7 +27,7 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-    "src/app/wifi-setup/page.js"
+    "src/app/setup/page.tsx"
   ],
   "exclude": ["node_modules"]
 }
