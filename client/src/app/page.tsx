@@ -278,7 +278,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     // Connect to WebSocket server
-    const ws = new WebSocket("ws://voltsense-server-110999938896.asia-south1.run.app");
+    const ws = new WebSocket("wss://voltsense-server-110999938896.asia-south1.run.app");
 
     ws.onmessage = async (event) => {
       const newData = JSON.parse(event.data);
