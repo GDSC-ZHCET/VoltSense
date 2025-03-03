@@ -11,7 +11,9 @@ export default {
   ],
   theme: {
     extend: {
-      fontFamily: { montserrat: ["var(--font-montserrat)"] },
+      fontFamily: {
+        kode: ["Kode Mono", "monospace"],
+      },
       colors: {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",

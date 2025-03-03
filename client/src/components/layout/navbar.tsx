@@ -1,78 +1,41 @@
-import { Navbar, NavbarBrand, NavbarContent, NavbarItem } from "@heroui/navbar";
-import Link from "next/link";
-import { Button } from "../ui/button";
 import Image from "next/image";
-
-export const VoltLogo = () => {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="lightblue"
-      stroke="none"
-      width="40"
-      height="40"
-    >
-      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-    </svg>
-  );
-};
+import { useState } from "react";
 
 export default function Nav() {
+  const [isOpen, setIsOpen] = useState(false);
+
   return (
-    <Navbar className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white shadow-lg rounded-2xl px-8 py-4 w-[95%] max-w-6xl transition-all duration-300 z-10 hidden md:flex">
-      <NavbarBrand className="flex items-center space-x-2">
-        {/* <VoltLogo /> */}
-        <Image
-          src={"/voltsense.png"}
-          width={1080}
-          height={1080}
-          alt="voltsense-logo"
-        ></Image>
-        <p className="font-bold text-white tracking-wide">Voltsense</p>
-      </NavbarBrand>
-      <NavbarContent
-        className="hidden sm:flex gap-x-8 space-x-4"
-        justify="center"
-      >
-        <NavbarItem>
-          <Link color="foreground" href="#">
-            Home
-          </Link>
-        </NavbarItem>
-        <NavbarItem isActive>
-          <Link aria-current="page" href="#">
-            About
-          </Link>
-        </NavbarItem>
-        <NavbarItem>
-          <Link color="foreground" href="#">
-            Features
-          </Link>
-        </NavbarItem>
-      </NavbarContent>
-      <NavbarContent className="hidden sm:flex gap-x-8 space-x-4" justify="end">
-        <NavbarItem className="hidden lg:flex">
-          <Button
-            // as={Link}
-            // href="#"
-            // variant="flat"
-            className="border border-grey-500 px-5 py-2 rounded-lg text-white-500 text-base hover:bg-blue-500 hover:text-white transition"
-          >
-            Login
-          </Button>
-        </NavbarItem>
-        <NavbarItem>
-          <Button
-            // as={Link}
-            // href="#"
-            // variant="flat"
-            className="border border-grey-500 px-5 py-2 rounded-lg text-white-500  text-base hover:bg-blue-500 hover:text-white transition"
-          >
-            Sign Up
-          </Button>
-        </NavbarItem>
-      </NavbarContent>
-    </Navbar>
+    <nav className="bg-[#424242] text-white rounded-2xl w-full p-3 md:w-auto text-center mt-2.5">
+      <div className="flex justify-between items-center font-kode font-bold shadow-gray-400 w-full">
+        <div className="flex gap-2 items-center text-2xl">
+          <Image src="/electric.png" width={40} height={40} alt="logo" />
+          VOLTSENSE
+        </div>
+        
+        <div className="hidden md:flex items-center gap-8">
+          <div>HOME</div>
+          <div>FEATURES</div>
+          <div>
+            <button className="min-w-20 rounded-2xl bg-[#e3e3e3] p-2 text-black hover:bg-blue-500">
+              LOGIN
+            </button>
+          </div>
+        </div>
+
+        <button onClick={() => setIsOpen(!isOpen)} className="md:hidden p-2">
+          ☰
+        </button>
+      </div>
+
+      {isOpen && (
+        <div className="flex flex-col items-center gap-4 mt-2 md:hidden w-full">
+          <div>HOME</div>
+          <div>FEATURES</div>
+          <button className="min-w-20 rounded-2xl bg-[#e3e3e3] p-2 text-black hover:bg-blue-500">
+            LOGIN
+          </button>
+        </div>
+      )}
+    </nav>
   );
 }
