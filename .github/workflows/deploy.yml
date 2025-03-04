@@ -45,38 +45,38 @@ jobs:
             --allow-unauthenticated \
             --set-env-vars NEXT_PUBLIC_FIREBASE_API_KEY=${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }},NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=${{ secrets.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }},NEXT_PUBLIC_FIREBASE_PROJECT_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_PROJECT_ID }},NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=${{ secrets.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET }},NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }},NEXT_PUBLIC_FIREBASE_APP_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }},NEXT_PUBLIC_FCM_KEY=${{ secrets.NEXT_PUBLIC_FCM_KEY }}
 
-  deploy-server:
-    runs-on: ubuntu-latest
+  # deploy-server:
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+  #   steps:
+  #     - name: Checkout Repository
+  #       uses: actions/checkout@v4
 
-      - name: Authenticate with Google Cloud
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+  #     - name: Authenticate with Google Cloud
+  #       uses: google-github-actions/auth@v2
+  #       with:
+  #         credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
 
-      - name: Set Up Google Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
+  #     - name: Set Up Google Cloud SDK
+  #       uses: google-github-actions/setup-gcloud@v2
 
-      - name: Debug Variables
-        run: |
-          echo "GCP_PROJECT_ID=${{ secrets.GCP_PROJECT_ID }}"
-          echo "CLOUD_RUN_SERVER_SERVICE=${{ secrets.CLOUD_RUN_SERVER_SERVICE_NAME }}"
+  #     - name: Debug Variables
+  #       run: |
+  #         echo "GCP_PROJECT_ID=${{ secrets.GCP_PROJECT_ID }}"
+  #         echo "CLOUD_RUN_SERVER_SERVICE=${{ secrets.CLOUD_RUN_SERVER_SERVICE_NAME }}"
 
-      - name: Build and Push Server Docker Image
-        run: |
-          cd server
-          gcloud auth configure-docker gcr.io
-          docker build --platform linux/arm64 -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.CLOUD_RUN_SERVER_SERVICE_NAME }} .
-          docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.CLOUD_RUN_SERVER_SERVICE_NAME }}
+  #     - name: Build and Push Server Docker Image
+  #       run: |
+  #         cd server
+  #         gcloud auth configure-docker gcr.io
+  #         docker build --platform linux/arm64 -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.CLOUD_RUN_SERVER_SERVICE_NAME }} .
+  #         docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.CLOUD_RUN_SERVER_SERVICE_NAME }}
 
-      - name: Deploy Server to Cloud Run
-        run: |
-          gcloud run deploy ${{ secrets.CLOUD_RUN_SERVER_SERVICE_NAME }} \
-            --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.CLOUD_RUN_SERVER_SERVICE_NAME }} \
-            --region ${{ secrets.CLOUD_RUN_REGION }} \
-            --platform managed \
-            --allow-unauthenticated \
-            --set-env-vars FIREBASE_API_KEY=${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }},FIREBASE_AUTH_DOMAIN=${{ secrets.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }},FIREBASE_PROJECT_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_PROJECT_ID }},FIREBASE_STORAGE_BUCKET=${{ secrets.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET }},FIREBASE_MESSAGING_SENDER_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }},FIREBASE_APP_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }},FIREBASE_CLIENT_EMAIL=${{ secrets.FIREBASE_CLIENT_EMAIL }},FIREBASE_PRIVATE_KEY="${{ secrets.FIREBASE_PRIVATE_KEY }}"
+  #     - name: Deploy Server to Cloud Run
+  #       run: |
+  #         gcloud run deploy ${{ secrets.CLOUD_RUN_SERVER_SERVICE_NAME }} \
+  #           --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/${{ secrets.CLOUD_RUN_SERVER_SERVICE_NAME }} \
+  #           --region ${{ secrets.CLOUD_RUN_REGION }} \
+  #           --platform managed \
+  #           --allow-unauthenticated \
+  #           --set-env-vars FIREBASE_API_KEY=${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }},FIREBASE_AUTH_DOMAIN=${{ secrets.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }},FIREBASE_PROJECT_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_PROJECT_ID }},FIREBASE_STORAGE_BUCKET=${{ secrets.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET }},FIREBASE_MESSAGING_SENDER_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }},FIREBASE_APP_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }},FIREBASE_CLIENT_EMAIL=${{ secrets.FIREBASE_CLIENT_EMAIL }},FIREBASE_PRIVATE_KEY="${{ secrets.FIREBASE_PRIVATE_KEY }}"
