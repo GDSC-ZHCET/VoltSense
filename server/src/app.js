@@ -7,7 +7,6 @@ const { messaging } = require("./firebaseAdmin"); // Import Firebase Admin SDK
 const { generateInsight } = require("./vertexAI");
 
 require("dotenv").config();
-
 const cors = require("cors");
 
 // Firebase configuration
@@ -29,7 +28,7 @@ const expressApp = express();
 expressApp.use(cors());
 expressApp.use(express.json());
 
-const userTokens = {}; // Store user tokens in memory (Use Firestore in production)
+const userTokens = new Map(); // Use a Map for better performance
 
 // Create an HTTP server
 const server = http.createServer(expressApp);
@@ -77,38 +76,60 @@ wss.on("connection", (ws) => {
 
 expressApp.post("/api/save-token", (req, res) => {
   const { userId, token } = req.body;
-  userTokens[userId] = token;
-  console.log(`Saved FCM token for user ${userId}: ${token}`);
-  res.status(200).send({ success: true });
+  if (userId && token) {
+    userTokens.set(userId, token);
+    console.log(`✅ Saved FCM token for user ${userId}: ${token}`);
+    return res.status(200).send({ success: true });
+  }
+  res.status(400).send({ error: "Invalid userId or token" });
 });
 
 // API to get stored tokens
 expressApp.get("/api/get-tokens", (req, res) => {
-  res.json({ tokens: Object.values(userTokens) });
+  res.json({ tokens: [...userTokens.values()] });
 });
 
 // API to send notifications
+// expressApp.post("/api/send-notification", async (req, res) => {
+//   const { tokens, notification } = req.body;
+
+//   if (!tokens.length) {
+//     return res.status(400).send({ error: "No tokens available" });
+//   }
+
+//   const payload = {
+//     notification: {
+//       title: notification.title,
+//       body: notification.body,
+//     },
+//     tokens,
+//   };
+
+//   try {
+//     const response = await messaging.sendEachForMulticast(payload);
+//     console.log("FCM Notification sent:", response.successCount);
+//     res.status(200).send({ success: true });
+//   } catch (error) {
+//     console.error("Error sending FCM notification:", error);
+//     res.status(500).send({ error: "Failed to send notification" });
+//   }
+// });
+
 expressApp.post("/api/send-notification", async (req, res) => {
   const { tokens, notification } = req.body;
-
-  if (!tokens.length) {
-    return res.status(400).send({ error: "No tokens available" });
+  if (!tokens?.length) {
+    return res.status(400).send({ error: "No tokens provided" });
   }
 
-  const payload = {
-    notification: {
-      title: notification.title,
-      body: notification.body,
-    },
-    tokens,
-  };
-
   try {
-    const response = await messaging.sendEachForMulticast(payload);
-    console.log("FCM Notification sent:", response.successCount);
+    const response = await messaging.sendEachForMulticast({
+      notification: { title: notification.title, body: notification.body },
+      tokens,
+    });
+    console.log(`✅ Notification sent: ${response.successCount} successes`);
     res.status(200).send({ success: true });
   } catch (error) {
-    console.error("Error sending FCM notification:", error);
+    console.error("❌ Error sending FCM notification:", error);
     res.status(500).send({ error: "Failed to send notification" });
   }
 });
@@ -119,15 +140,29 @@ expressApp.get("/api/insight", async (req, res) => {
     const insight = await generateInsight();
     res.status(200).json({ insight });
   } catch (error) {
-    res.status(500).json({ error: "Failed to generate AI insight" });
+    console.error("❌ Failed to generate AI insight:", error);
+    res.status(500).json({ error: "AI insight generation failed" });
   }
 });
+
+// Periodically generate insights and send them via WebSocket
+setInterval(async () => {
+  const insight = await generateInsight();
+  if (insight) {
+    wss.clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(JSON.stringify({ type: "insight", insight }));
+      }
+    });
+    console.log(`✅ Insight broadcasted: ${insight}`);
+  }
+}, 15 * 60 * 1000); // Every 15 minutes
 
 module.exports = { db };
 
 // Start the server
 const PORT = process.env.PORT || 8080;
 server.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-  console.log(`WebSocket server is running on ws://localhost:${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`📡 WebSocket listening on ws://localhost:${PORT}`);
 });

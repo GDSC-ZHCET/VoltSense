@@ -38,7 +38,10 @@ async function generateInsight() {
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro" });
     const result = await model.generateContent(prompt);
     // const response = result.response.text();
-    const response = result.response.text()?.trim();
+    // const response = result.response.text()?.trim() || "No insight generated.";
+    const response =
+      result.response.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ||
+      "No insight generated.";
 
     // Store the insight in Firestore
     await db.collection("insights").doc("latest").set({
