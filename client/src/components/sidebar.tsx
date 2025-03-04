@@ -44,31 +44,11 @@ const sidebarItems = [
     href: "/dashboard",
     icon: "layout-dashboard",
   },
-  // {
-  //   title: "Real-time Monitor",
-  //   href: "/dashboard/monitor",
-  //   icon: "activity",
-  // },
-  // {
-  //   title: "Analytics",
-  //   href: "/dashboard/analytics",
-  //   icon: "bar-chart",
-  // },
   {
     title: "Schedules",
     href: "/dashboard/schedules",
     icon: "calendar",
   },
-  // {
-  //   title: "Automation",
-  //   href: "/dashboard/automation",
-  //   icon: "settings",
-  // },
-  // {
-  //   title: "Alerts",
-  //   href: "/dashboard/alerts",
-  //   icon: "bell",
-  // },
   {
     title: "Settings",
     href: "/dashboard/settings",
@@ -167,7 +147,6 @@ export function Sidebar({ className }: SidebarProps) {
       const response = await fetch(
         "https://voltsense-server-110999938896.asia-south1.run.app/api/save-token",
         {
-          // const response = await fetch("http://localhost:8080/api/save-token", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -191,7 +170,6 @@ export function Sidebar({ className }: SidebarProps) {
       const response = await fetch(
         "https://voltsense-server-110999938896.asia-south1.run.app/api/get-tokens"
       );
-      // const response = await fetch("http://localhost:8080/api/get-tokens");
       const { tokens } = await response.json();
 
       if (tokens.length === 0) {
@@ -202,7 +180,6 @@ export function Sidebar({ className }: SidebarProps) {
       await fetch(
         "https://voltsense-server-110999938896.asia-south1.run.app/api/send-notification",
         {
-          // await fetch("http://localhost:8080/api/send-notification", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

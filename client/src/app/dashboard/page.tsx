@@ -426,7 +426,6 @@ export default function DashboardPage() {
   // Connect to WebSocket for real-time updates
   useEffect(() => {
     const ws = new WebSocket(
-      // "ws://localhost:8080"
       "wss://voltsense-server-110999938896.asia-south1.run.app"
     );
     setWs(ws);
