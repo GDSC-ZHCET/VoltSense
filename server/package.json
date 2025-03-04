@@ -11,11 +11,14 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
+    "@google-cloud/aiplatform": "^3.34.0",
+    "@google/generative-ai": "^0.22.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "firebase": "^11.3.1",
     "firebase-admin": "^13.1.0",
+    "firebase-functions": "^6.3.2",
     "jsonwebtoken": "^9.0.2",
     "mqtt": "^5.10.3"
   }

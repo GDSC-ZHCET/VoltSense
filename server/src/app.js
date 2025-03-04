@@ -4,6 +4,8 @@ const WebSocket = require("ws");
 const { initializeApp } = require("firebase/app");
 const { getFirestore, collection, addDoc } = require("firebase/firestore");
 const { messaging } = require("./firebaseAdmin"); // Import Firebase Admin SDK
+const { generateInsight } = require("./vertexAI");
+
 require("dotenv").config();
 
 const cors = require("cors");
@@ -110,6 +112,18 @@ expressApp.post("/api/send-notification", async (req, res) => {
     res.status(500).send({ error: "Failed to send notification" });
   }
 });
+
+// API to get latest AI-generated insight
+expressApp.get("/api/insight", async (req, res) => {
+  try {
+    const insight = await generateInsight();
+    res.status(200).json({ insight });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to generate AI insight" });
+  }
+});
+
+module.exports = { db };
 
 // Start the server
 const PORT = process.env.PORT || 8080;

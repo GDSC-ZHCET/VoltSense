@@ -36,6 +36,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import InsightsBox from "@/components/InsightsBox";
 
 // Define the structure of the sensor data
 interface SensorData {
@@ -535,7 +536,7 @@ export default function DashboardPage() {
             </Select>
           </div>
         </DashboardHeader>
-
+        <InsightsBox />
         <Tabs defaultValue="overview" className="space-y-4">
           <TabsList className="grid w-full grid-cols-2 lg:w-auto">
             <TabsTrigger value="overview">Overview</TabsTrigger>

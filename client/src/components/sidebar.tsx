@@ -3,8 +3,15 @@
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Bell, AlertCircle, CheckCircle, Power, Zap } from "lucide-react";
-import { usePathname } from "next/navigation";
+import {
+  Bell,
+  AlertCircle,
+  CheckCircle,
+  Power,
+  Zap,
+  LogOut,
+} from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
 import NextLink from "next/link";
 import { db } from "@/lib/firebaseConfig";
 import {
@@ -19,8 +26,15 @@ import {
 import { useEffect, useState } from "react";
 import { messaging } from "@/lib/firebaseConfig";
 import { getToken } from "firebase/messaging";
-import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
 import { Timestamp } from "firebase/firestore"; // ✅ Import Timestamp type
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"; // Import Avatar components
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {}
 
@@ -30,31 +44,31 @@ const sidebarItems = [
     href: "/dashboard",
     icon: "layout-dashboard",
   },
-  {
-    title: "Real-time Monitor",
-    href: "/dashboard/monitor",
-    icon: "activity",
-  },
-  {
-    title: "Analytics",
-    href: "/dashboard/analytics",
-    icon: "bar-chart",
-  },
+  // {
+  //   title: "Real-time Monitor",
+  //   href: "/dashboard/monitor",
+  //   icon: "activity",
+  // },
+  // {
+  //   title: "Analytics",
+  //   href: "/dashboard/analytics",
+  //   icon: "bar-chart",
+  // },
   {
     title: "Schedules",
     href: "/dashboard/schedules",
     icon: "calendar",
   },
-  {
-    title: "Automation",
-    href: "/dashboard/automation",
-    icon: "settings",
-  },
-  {
-    title: "Alerts",
-    href: "/dashboard/alerts",
-    icon: "bell",
-  },
+  // {
+  //   title: "Automation",
+  //   href: "/dashboard/automation",
+  //   icon: "settings",
+  // },
+  // {
+  //   title: "Alerts",
+  //   href: "/dashboard/alerts",
+  //   icon: "bell",
+  // },
   {
     title: "Settings",
     href: "/dashboard/settings",
@@ -72,15 +86,49 @@ interface Alert {
 
 export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [displayedAlerts, setDisplayedAlerts] = useState<Alert[]>([]);
 
   const [prevAlertCount, setPrevAlertCount] = useState(0);
   const [playSound, setPlaySound] = useState(false);
+  const [user, setUser] = useState<{
+    name: string;
+    email: string;
+    image?: string;
+  } | null>(null);
 
   const voltageThreshold = 225;
   const currentThreshold = 5.9;
   const powerThreshold = 1270;
+
+  useEffect(() => {
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setUser({
+          name: user.displayName || "User",
+          email: user.email || "user@example.com",
+          image: user.photoURL || "",
+        });
+      } else {
+        setUser(null);
+        router.push("/auth");
+      }
+    });
+
+    return () => unsubscribe();
+  }, [router]);
+
+  const handleLogout = async () => {
+    const auth = getAuth();
+    try {
+      await signOut(auth);
+      router.push("/auth"); // Redirect to auth page after logout
+    } catch (error) {
+      console.error("Error logging out:", error);
+    }
+  };
 
   const requestNotificationPermission = async () => {
     if (!messaging) {
@@ -353,7 +401,7 @@ export function Sidebar({ className }: SidebarProps) {
             Clear All
           </button>
         )}
-        <ScrollArea className="h-64 mt-2">
+        <ScrollArea className="h-96 mt-2">
           <div className="space-y-2">
             {displayedAlerts.length === 0 ? (
               <p className="text-sm text-gray-500">No new alerts</p>
@@ -386,6 +434,32 @@ export function Sidebar({ className }: SidebarProps) {
           </div>
         </ScrollArea>
       </div>
+
+      {/* User Profile Section */}
+      {user && (
+        <div className="px-4 py-2 border-t border-gray-300">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <div className="flex items-center gap-3 cursor-pointer">
+                <Avatar>
+                  <AvatarImage src={user.image} alt={user.name} />
+                  <AvatarFallback>{user.name[0]}</AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="text-sm font-medium">{user.name}</p>
+                  <p className="text-xs text-gray-500">{user.email}</p>
+                </div>
+              </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56">
+              <DropdownMenuItem onClick={handleLogout}>
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Logout</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      )}
     </div>
   );
 }
