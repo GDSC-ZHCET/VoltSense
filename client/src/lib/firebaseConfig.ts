@@ -28,6 +28,9 @@ if (typeof window !== "undefined") {
 
           console.log("Service Worker registered:", registration);
 
+          // Ensure the service worker is ready before sending the config
+          await navigator.serviceWorker.ready;
+
           // ✅ Send Firebase config to the service worker
           registration.active?.postMessage({
             type: "INIT_FIREBASE",
