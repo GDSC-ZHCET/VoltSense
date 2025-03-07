@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
-import mdns from "multicast-dns";
+// import mdns from "multicast-dns";
 
 export default function SetupPage() {
   const [devices, setDevices] = useState<string[]>([]);
@@ -17,30 +17,30 @@ export default function SetupPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  // Scan for ESP32 devices using mDNS
-  useEffect(() => {
-    const scanner = mdns();
+  // // Scan for ESP32 devices using mDNS
+  // useEffect(() => {
+  //   const scanner = mdns();
 
-    scanner.on("response", (response) => {
-      const esp32Devices = response.answers
-        .filter((record) => record.name.includes("esp32"))
-        .map((record) => record.name);
-      setDevices(esp32Devices);
-    });
+  //   scanner.on("response", (response) => {
+  //     const esp32Devices = response.answers
+  //       .filter((record) => record.name.includes("esp32"))
+  //       .map((record) => record.name);
+  //     setDevices(esp32Devices);
+  //   });
 
-    scanner.query({
-      questions: [
-        {
-          name: "_esp32setup._tcp.local",
-          type: "PTR",
-        },
-      ],
-    });
+  //   scanner.query({
+  //     questions: [
+  //       {
+  //         name: "_esp32setup._tcp.local",
+  //         type: "PTR",
+  //       },
+  //     ],
+  //   });
 
-    return () => {
-      scanner.destroy();
-    };
-  }, []);
+  //   return () => {
+  //     scanner.destroy();
+  //   };
+  // }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
