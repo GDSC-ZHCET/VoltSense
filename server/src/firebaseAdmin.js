@@ -1,6 +1,5 @@
 const admin = require("firebase-admin");
 require("dotenv").config();
-const fs = require("fs");
 
 if (!admin.apps.length) {
   admin.initializeApp({
