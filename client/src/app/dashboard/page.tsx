@@ -37,6 +37,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import InsightsBox from "@/components/InsightsBox";
+import AnomaliesBox from "@/components/AnomaliesBox";
 
 // Define the structure of the sensor data
 interface SensorData {
@@ -335,10 +336,25 @@ export default function DashboardPage() {
           // limit(10)
         );
         const querySnapshot = await getDocs(q);
-        const data = querySnapshot.docs.map((doc) => doc.data() as SensorData);
-        const totalPower =
-          data.reduce((sum, entry) => sum + entry.power, 0) / 1000;
-        setTotalPowerConsumed(totalPower);
+        const data = querySnapshot.docs.map((doc) => {
+          const docData = doc.data() as SensorData;
+          // Ensure we have valid numeric values
+          return {
+            ...docData,
+            voltage: typeof docData.voltage === "number" ? docData.voltage : 0,
+            current: typeof docData.current === "number" ? docData.current : 0,
+            power: typeof docData.power === "number" ? docData.power : 0,
+          };
+        });
+
+        // Calculate total power with safety checks
+        let totalPower = 0;
+        for (const entry of data) {
+          if (typeof entry.power === "number" && !isNaN(entry.power)) {
+            totalPower += entry.power / 1000;
+          }
+        }
+        setTotalPowerConsumed(isNaN(totalPower) ? 0 : totalPower);
 
         setSensorData(data.slice(-maxDataPoints));
         return;
@@ -423,7 +439,6 @@ export default function DashboardPage() {
     fetchData();
   }, [timeframe]);
 
-  // Connect to WebSocket for real-time updates
   useEffect(() => {
     const ws = new WebSocket(
       "wss://voltsense-server-110999938896.asia-south1.run.app"
@@ -433,11 +448,28 @@ export default function DashboardPage() {
     ws.onmessage = (event) => {
       const newData = JSON.parse(event.data);
 
-      // Add timestamp to the data
-      newData.timestamp = new Date().toISOString();
+      // Add timestamp to the data if not present
+      newData.timestamp = newData.timestamp || new Date().toISOString();
 
-      // Update total power consumed
-      setTotalPowerConsumed((prevTotal) => prevTotal + newData.power / 1000);
+      // Validate all numeric fields
+      newData.voltage =
+        typeof newData.voltage === "number" ? newData.voltage : 0;
+      newData.current =
+        typeof newData.current === "number" ? newData.current : 0;
+      newData.power = typeof newData.power === "number" ? newData.power : 0;
+
+      // Update total power consumed (only if power is valid)
+      setTotalPowerConsumed((prevTotal) => {
+        // Make sure we're adding a valid number
+        const powerIncrement = newData.power / 1000 || 0;
+        const newTotal = (prevTotal || 0) + powerIncrement;
+        return isNaN(newTotal) ? 0 : newTotal; // Ensure we never return NaN
+      });
+
+      // Update device status
+      if (newData.status !== undefined) {
+        setDeviceStatus(newData.status);
+      }
 
       // Update state for UI (keep only the last 10 readings)
       setSensorData((prevData) => {
@@ -484,34 +516,45 @@ export default function DashboardPage() {
     setDeviceStatus(checked);
   };
 
-  // Calculate current power (in kW)
+  // For the currentPower calculation
   const currentPower =
-    sensorData.length > 0 ? sensorData[sensorData.length - 1].power / 1000 : 0;
+    sensorData.length > 0 &&
+    typeof sensorData[sensorData.length - 1].power === "number" &&
+    !isNaN(sensorData[sensorData.length - 1].power)
+      ? sensorData[sensorData.length - 1].power / 1000
+      : 0;
 
-  // Calculate voltage
+  // For voltage display
   const voltage =
-    sensorData.length > 0 ? sensorData[sensorData.length - 1].voltage : 0;
+    sensorData.length > 0 &&
+    typeof sensorData[sensorData.length - 1].voltage === "number" &&
+    !isNaN(sensorData[sensorData.length - 1].voltage)
+      ? sensorData[sensorData.length - 1].voltage
+      : 0;
 
+  // For current display
   const current =
-    sensorData.length > 0 ? sensorData[sensorData.length - 1].current : 0;
+    sensorData.length > 0 &&
+    typeof sensorData[sensorData.length - 1].current === "number" &&
+    !isNaN(sensorData[sensorData.length - 1].current)
+      ? sensorData[sensorData.length - 1].current
+      : 0;
 
-  // Calculate percentage change in power consumption (compared to the previous reading)
+  // For the power change percentage calculation
   const powerChangePercentage =
-    sensorData.length > 1
+    sensorData.length > 1 &&
+    typeof sensorData[sensorData.length - 1].power === "number" &&
+    typeof sensorData[sensorData.length - 2].power === "number" &&
+    sensorData[sensorData.length - 2].power !== 0 // Avoid division by zero
       ? ((sensorData[sensorData.length - 1].power -
           sensorData[sensorData.length - 2].power) /
           sensorData[sensorData.length - 2].power) *
         100
       : 0;
+
   return (
     <main className="flex flex-col">
       <DashboardShell>
-        {/* <DashboardHeader
-          heading="Dashboard"
-          text="Overview of your smart switch system."
-        >
-          <Button>Refresh</Button>
-        </DashboardHeader> */}
         <DashboardHeader
           heading="Dashboard"
           text="Overview of your smart switch system."
@@ -536,6 +579,7 @@ export default function DashboardPage() {
           </div>
         </DashboardHeader>
         <InsightsBox />
+        <AnomaliesBox />
         <Tabs defaultValue="overview" className="space-y-4">
           <TabsList className="grid w-full grid-cols-2 lg:w-auto">
             <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -549,22 +593,24 @@ export default function DashboardPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    {voltage.toFixed(2)} V
+                    {voltage !== undefined ? voltage.toFixed(2) : "0.00"} V
                   </div>
                   <p className="text-xs text-muted-foreground">Stable</p>
                 </CardContent>
               </Card>
+
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Current</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    {current.toFixed(2)} A
+                    {current !== undefined ? current.toFixed(2) : "0.00"} A
                   </div>
                   <p className="text-xs text-muted-foreground">Stable</p>
                 </CardContent>
               </Card>
+
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">
@@ -573,10 +619,15 @@ export default function DashboardPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    {currentPower.toFixed(2)} kW
+                    {currentPower !== undefined
+                      ? currentPower.toFixed(2)
+                      : "0.00"}{" "}
+                    kW
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    {powerChangePercentage.toFixed(1)}% from average
+                    {powerChangePercentage !== undefined
+                      ? `${powerChangePercentage.toFixed(1)}% from average`
+                      : "0.0% from average"}
                   </p>
                 </CardContent>
               </Card>
