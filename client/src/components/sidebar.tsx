@@ -78,9 +78,7 @@ export function Sidebar({ className }: SidebarProps) {
     image?: string;
   } | null>(null);
 
-  const voltageThreshold = 225;
-  const currentThreshold = 5.9;
-  const powerThreshold = 1270;
+  const voltageThreshold = 235;
 
   useEffect(() => {
     const auth = getAuth();
@@ -243,32 +241,10 @@ export function Sidebar({ className }: SidebarProps) {
         await addDoc(collection(db, "alerts"), alertData);
         await sendNotification(alertData.message); // Send notification
       }
-
-      if (latestMetric.current > currentThreshold) {
-        const alertData = {
-          message: `Current threshold exceeded: ${latestMetric.current}A`,
-          timestamp: timestamp,
-          read: false,
-          type: "current",
-        };
-        await addDoc(collection(db, "alerts"), alertData);
-        await sendNotification(alertData.message); // Send notification
-      }
-
-      if (latestMetric.power > powerThreshold) {
-        const alertData = {
-          message: `Power threshold exceeded: ${latestMetric.power}W`,
-          timestamp: timestamp,
-          read: false,
-          type: "power",
-        };
-        await addDoc(collection(db, "alerts"), alertData);
-        // await sendNotification(alertData.message); // Send notification
-      }
     });
 
     return () => metricsUnsubscribe();
-  }, [voltageThreshold, currentThreshold, powerThreshold]);
+  }, [voltageThreshold]);
 
   useEffect(() => {
     if (playSound) {
