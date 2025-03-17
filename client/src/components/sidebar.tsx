@@ -45,8 +45,8 @@ const sidebarItems = [
     icon: "layout-dashboard",
   },
   {
-    title: "Schedules",
-    href: "/dashboard/schedules",
+    title: "Schedule",
+    href: "/dashboard/schedule",
     icon: "calendar",
   },
   {
