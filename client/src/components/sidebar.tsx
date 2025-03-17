@@ -78,7 +78,7 @@ export function Sidebar({ className }: SidebarProps) {
     image?: string;
   } | null>(null);
 
-  const voltageThreshold = 235;
+  const voltageThreshold = 300;
 
   useEffect(() => {
     const auth = getAuth();
