@@ -50,4 +50,4 @@ if (typeof window !== "undefined") {
     });
 }
 
-export { auth, db, messaging };
+export { app, auth, db, messaging };
