@@ -7,7 +7,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const db = getFirestore();
 
 // Thresholds for anomaly detection
-const VOLTAGE_THRESHOLD = 235;
+const VOLTAGE_THRESHOLD = 280;
 
 /**
  * 🔹 Generate AI-Based Insights (Runs every 15 min)
