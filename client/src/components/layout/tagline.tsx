@@ -15,7 +15,7 @@ export default function Tagline() {
       <div className="flex flex-col md:flex-row gap-6 items-center text-xl md:text-2xl p-4 md:p-8 m-5 md:m-20">
         <Image
           className="mr-0 md:mr-8"
-          src="/voltsense-prototype.jpg"
+          src="/voltsense-mvp.jpg"
           alt="Device"
           width={300}
           height={200}
