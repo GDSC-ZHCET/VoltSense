@@ -1,123 +1,127 @@
-# VoltSense - IoT Smart Switch with Real-Time Metrics and Control
+# VoltSense: AI-Powered Smart Energy Monitoring System
 
-VoltSense is an IoT-enabled smart switch that allows users to monitor power usage, control appliances remotely, and gain insights into energy consumption patterns. It includes a web dashboard and a mobile app for seamless user interaction.
+![VoltSense](https://github.com/GDSC-ZHCET/VoltSense/blob/master/client/public/misc/banner.jpg) <!-- Add relevant image or logo -->
 
-## Table of Contents
+## 📌 Overview
+VoltSense is an AI-powered IoT-based smart energy monitoring system designed to detect voltage anomalies, prevent electrical failures, and provide real-time insights through a web dashboard and mobile application. The project leverages **Google Cloud Run, Firebase, Vertex AI (Gemini API), WebSockets, and Docker** to create a robust, scalable, and intelligent energy management solution.
 
-- [Overview](#overview)
-- [Features](#features)
-- [Hardware Components](#hardware-components)
-- [Software Components](#software-components)
-- [Setup and Installation](#setup-and-installation)
-- [Usage](#usage)
-- [Backend Server](#backend-server)
-- [ESP32 Firmware](#esp32-firmware)
-- [Frontend Application](#frontend-application)
-- [Google AI Integration](#google-ai-integration)
-- [Contributing](#contributing)
-- [License](#license)
+## 🎯 Problem Statement
+Electrical failures and voltage fluctuations are significant challenges in many regions, especially in India, causing damage to appliances, financial losses, and even safety hazards. **VoltSense** provides a real-time monitoring system with anomaly detection to alert users before major electrical issues occur.
 
-## Overview
+## 🌍 Sustainable Development Goals (SDG)
+VoltSense aligns with **SDG 7 (Affordable and Clean Energy)** and **SDG 12 (Responsible Consumption and Production)** by promoting efficient energy usage, reducing electrical hazards, and enabling smart grid advancements.
 
-VoltSense aims to provide an affordable and scalable solution for smart energy management in households and small businesses. By leveraging IoT and cloud technologies, it empowers users with real-time data and actionable insights to promote energy conservation.
+## 🚀 Features
+### 🔌 IoT Smart Switch
+- Monitors real-time **voltage and current** using **ZMPT101B (voltage sensor)** and **ACS712 (current sensor)**.
+- Controls electrical appliances via **Songle SRD-05VDC-SL-C relay module**.
+- Uses **Hi-Link HLK-PM01 (AC 220V to DC 5V)** for power conversion.
+- **WiFiManager (AP Mode)** for easy device setup.
 
-## Features
+### 🌐 Web Dashboard
+- **Real-time energy monitoring** with interactive graphs.
+- **Anomaly detection using AI (Vertex AI API - Gemini API)**.
+- **User authentication (Firebase Authentication)**.
+- **Secure WebSocket communication for live data updates**.
+- **Deployed using Google Cloud Run (Dockerized)**.
 
-- Real-time monitoring of power usage.
-- Remote control of appliances.
-- Historical data visualization.
-- Energy-saving recommendations.
-- Carbon footprint tracking.
-- Google AI-powered insights and anomaly detection.
-- Web dashboard and mobile app for device management.
+### 📱 Mobile Application
+- **Live energy tracking on the go**.
+- **Push notifications via Firebase Cloud Messaging (FCM)**.
+- **Secure access using Firebase Authentication**.
+- **Remote control of appliances**.
 
-## Hardware Components
+---
 
-- **ESP32 Microcontroller**: For managing IoT functionalities.
-- **ACS712 Current Sensor**: To measure current flow.
-- **Relay Module**: To control the connected appliances.
-- **Voltage Regulator**: To power the ESP32 and peripherals.
-- **Enclosure**: Fireproof casing for safety.
+## 🔧 Tech Stack
+| Component       | Technology Used |
+|----------------|----------------|
+| **Hardware**   | ESP32 Devkit V1, ZMPT101B, ACS712, Songle Relay, Hi-Link HLK-PM01 |
+| **Frontend**   | Next.js, Tailwind CSS, Chart.js |
+| **Backend**    | Node.js, Express.js, Google Cloud Run, WebSockets |
+| **Database**   | Firestore Database (NoSQL) |
+| **Deployment** | Google Cloud Run, Docker |
+| **AI**        | Vertex AI API (Gemini API) |
+| **Authentication** | Firebase Authentication |
+| **Notifications** | Firebase Cloud Messaging (FCM) |
+| **Storage**    | Firebase Storage |
 
-## Software Components
+---
 
-- **Backend**: Express.js server handling MQTT messages and database interactions.
-- **Frontend**: Next.js for the web dashboard.
-- **MQTT Broker**: Hosted on Google Cloud VM.
-- **Database**: Firebase Firestore for storing user data and metrics.
-- **Mobile App**: Flutter-based app for mobile control and insights.
+## 📊 Process Flow
 
-## Setup and Installation
+![Process Flow](https://github.com/GDSC-ZHCET/VoltSense/blob/master/client/public/misc/process-flow.png) <!-- Add relevant image or logo -->
 
-### 1. Clone the Repository
-```bash
-git clone https://github.com/yourusername/voltsense.git
-cd voltsense
-```
+## 🏗️ System Architecture
 
-### 2. Setting up the Backend
-Navigate to the `server` directory and install dependencies:
-```
-cd server
-npm install
-```
+![System Architecture](https://github.com/GDSC-ZHCET/VoltSense/blob/master/client/public/misc/architecture.png) <!-- Add relevant image or logo -->
 
-Start the Express server:
-```
-npm start
-```
+---
 
-### 3. Setting Up the Frontend
-Navigate to the `client` directory and install dependencies:
-```
-cd client
-npm install
-```
-Start the Next.js application:
-```
-npm run dev
-```
+## 🛠️ Installation & Setup
 
-### 4. Configuring the ESP32
-Flash the provided firmware onto the ESP32 to start sending MQTT messages to the broker.
+### 🚀 Backend Setup
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/GDSC-ZHCET/VoltSense.git
+   cd VoltSense/server
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Set up **Firebase credentials** and **Google Cloud Run API keys** in `.env`.
+4. Run the server:
+   ```bash
+   npm start
+   ```
 
-## Usage
-1. Web Dashboard: Access the web dashboard at http://localhost:3000 to monitor and control connected appliances.
-2. Mobile App: Install the Flutter app on your mobile device for remote management.
-3. MQTT Broker: Ensure the MQTT broker is running on your Google Cloud VM and accessible from your network.
+### 🌐 Frontend Setup (Web Dashboard)
+1. Navigate to the frontend directory:
+   ```bash
+   cd ../frontend
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Start the Next.js development server:
+   ```bash
+   npm run dev
+   ```
 
-## Backend Server
-The backend is built using Express.js and handles the following:
-- Connecting to the MQTT broker to receive messages.
-- Storing and retrieving data from Firebase Firestore.
-- Exposing APIs for the frontend to fetch real-time and historical data.
+---
 
-## API Endpoints
-- `GET /message`: Fetches the latest MQTT message.
-- `POST /control`: Sends control commands to the ESP32.
+## 📽️ Deployment URLs, Demo Video & Screenshots
 
-## ESP32 Firmware
-The ESP32 firmware is programmed to:
-- Connect to the specified MQTT broker.
-- Publish power usage data to the esp32/messages topic.
-- Listen for control commands on the esp32/control topic.
+[🔗 Dashboard URL](https://www.voltsense.app)
 
-## Frontend Application
-The frontend is a Next.js application that:
-- Provides a user-friendly interface for monitoring and controlling appliances.
-- Visualizes power usage data and insights.
-- Fetches data from the Express backend through REST APIs.
+[🔗 Server URL (only for serving API endpoints)](https://voltsense-server-110999938896.asia-south1.run.app)
 
+[📽 Watch Demo Video](https://youtu.be/K3QQnjetbyU)
 
-## Google AI Integration
-The project integrates with Google AI to:
-- Analyze power usage data.
-- Provide insights into energy consumption patterns.
-- Detect anomalies and suggest energy-saving practices.
+![Dashboard](https://github.com/GDSC-ZHCET/VoltSense/blob/master/client/public/misc/snapshots.png)
 
-## Contributing
-Contributions are welcome! Please fork the repository and create a pull request with your changes. Ensure that your code adheres to the project's coding standards and includes relevant tests.
+---
 
-## License
-This project is licensed under the MIT License. See the LICENSE file for more details.
+## 📌 Future Enhancements
+- **Reduce** the **cost of production** of IoT Smart Switch.
+- **Reduce** the **form factor** of the switch.
+- **Multi-device support** for industrial applications.
+- Train our own **ML Prediction Model** using **Vertex AI**, which will predict the estimated cost of electricity according to power consumption.
 
+---
+
+## 📜 License
+This project is licensed under the **MIT License**.
+
+---
+
+## 👨‍💻👩‍💻 Our Team
+We're a team of engineers from Zakir Husain College of College of Engineering and Technology, Aligarh Muslim University, India. We are a part of Google Developer Groups on Campus, ZHCET.
+- **Avyukt Soni *(Team Lead)*** - [LinkedIn](https://www.linkedin.com/in/avyuktsoni0731) | [Email](mailto:soniavyukt@gmail.com)
+- **Ziya Ali *(Team Member)*** - [LinkedIn](https://www.linkedin.com/in/ziya-ali-584a2628b) | [Email](mailto:ziyaali0072@gmail.com)
+- **Ahmad Ilyas *(Team Member)*** - [LinkedIn](https://www.linkedin.com/in/ahmad-ilyas-b79631278) | [Email](mailto:soniavyukt@gmail.com)
+- **Saad Ahmad *(Team Member)*** - [LinkedIn](https://www.linkedin.com/in/saad-ahmad-192909325) | [Email](mailto:sdahmad2867@gmail.com)
+
+---
