@@ -286,6 +286,7 @@ export default function DashboardPage() {
   const [deviceStatus, setDeviceStatus] = useState<boolean>(false); // Device status (on/off)
   const [ws, setWs] = useState<WebSocket | null>(null); // WebSocket instance
   const [timeframe, setTimeframe] = useState("real-time"); // Default to real-time (last 10 readings)
+  const [espID, setEspID] = useState("");
 
   // Initialize the device document in Firestore if it doesn't exist
   useEffect(() => {
@@ -448,6 +449,8 @@ export default function DashboardPage() {
     ws.onmessage = (event) => {
       const newData = JSON.parse(event.data);
 
+      if (newData.device_id) setEspID(newData.device_id);
+
       // Add timestamp to the data if not present
       newData.timestamp = newData.timestamp || new Date().toISOString();
 
@@ -460,22 +463,28 @@ export default function DashboardPage() {
 
       // Update total power consumed (only if power is valid)
       setTotalPowerConsumed((prevTotal) => {
-        // Make sure we're adding a valid number
         const powerIncrement = newData.power / 1000 || 0;
         const newTotal = (prevTotal || 0) + powerIncrement;
-        return isNaN(newTotal) ? 0 : newTotal; // Ensure we never return NaN
+        return isNaN(newTotal) ? 0 : newTotal;
       });
 
-      // Update device status
+      // Update device status from WebSocket (primary source of truth)
       if (newData.status !== undefined) {
         setDeviceStatus(newData.status);
+
+        // Sync Firestore with the WebSocket status
+        const deviceDocRef = doc(db, "devices", "ESP32_TEST_DEVICE");
+        updateDoc(deviceDocRef, {
+          status: newData.status ? "on" : "off",
+          last_updated: new Date().toISOString(),
+        });
       }
 
-      // Update state for UI (keep only the last 10 readings)
+      // Update sensor data
       setSensorData((prevData) => {
         const updatedData = [...prevData, newData];
         if (updatedData.length > maxDataPoints) {
-          return updatedData.slice(-maxDataPoints); // Keep only the last 10 readings
+          return updatedData.slice(-maxDataPoints);
         }
         return updatedData;
       });
@@ -498,22 +507,40 @@ export default function DashboardPage() {
     };
   }, []);
 
-  // Handle device status toggle
   const handleToggleDeviceStatus = async (checked: boolean) => {
-    const deviceDocRef = doc(db, "devices", "ESP32_TEST_DEVICE"); // Replace with your device ID
-    await updateDoc(deviceDocRef, {
-      status: checked ? "on" : "off",
-      last_updated: new Date().toISOString(),
-    });
-
-    // Send WebSocket message to ESP32
-    if (ws) {
-      ws.send(
-        JSON.stringify({ device_id: "ESP32_TEST_DEVICE", status: checked })
-      );
+    if (!ws) {
+      console.error("WebSocket is not connected.");
+      return;
     }
 
+    // Optimistically update the UI
     setDeviceStatus(checked);
+
+    // Send the toggle command via WebSocket
+    try {
+      const response = await fetch(
+        `https://voltsense-server-110999938896.asia-south1.run.app/api/send-command`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            device_id: espID,
+            command: "toggle_relay",
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to send command");
+      }
+    } catch (error) {
+      console.error("Error toggling device:", error);
+
+      // Revert the UI state if the command fails
+      setDeviceStatus(!checked);
+    }
   };
 
   // For the currentPower calculation

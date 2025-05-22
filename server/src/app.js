@@ -38,44 +38,6 @@ const server = http.createServer(expressApp);
 // Create a WebSocket server
 const wss = new WebSocket.Server({ server });
 
-// WebSocket connection handler
-// wss.on("connection", (ws) => {
-//   console.log("Client connected");
-
-//   ws.on("message", async (message) => {
-//     console.log(`Received raw message: ${message}`);
-
-//     try {
-//       // Parse the message as JSON
-//       const newData = JSON.parse(message);
-
-//       // Add timestamp to the data
-//       newData.timestamp = new Date().toISOString();
-
-//       // Store data in Firestore
-//       try {
-//         const docRef = await addDoc(collection(db, "sensorData"), newData);
-//         console.log("Data stored in Firestore with ID:", docRef.id);
-//       } catch (error) {
-//         console.error("Error storing data in Firestore:", error);
-//       }
-
-//       // Broadcast the message to all connected WebSocket clients
-//       wss.clients.forEach((client) => {
-//         if (client !== ws && client.readyState === WebSocket.OPEN) {
-//           client.send(JSON.stringify(newData));
-//         }
-//       });
-//     } catch (error) {
-//       console.error("Invalid JSON received:", error);
-//     }
-//   });
-
-//   ws.on("close", () => {
-//     console.log("Client disconnected");
-//   });
-// });
-
 wss.on("connection", (ws) => {
   console.log("Client connected via WebSocket");
 
