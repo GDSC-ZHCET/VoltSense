@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/select";
 import InsightsBox from "@/components/InsightsBox";
 import AnomaliesBox from "@/components/AnomaliesBox";
+import DevicesBox from "@/components/DevicesBox";
 
 // Define the structure of the sensor data
 interface SensorData {
@@ -287,20 +288,53 @@ export default function DashboardPage() {
   const [ws, setWs] = useState<WebSocket | null>(null); // WebSocket instance
   const [timeframe, setTimeframe] = useState("real-time"); // Default to real-time (last 10 readings)
   const [espID, setEspID] = useState("");
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string>(""); // selected device
+  const [availableDevices, setAvailableDevices] = useState<string[]>([]);
+
+  const handleDeviceChange = (deviceId: string) => {
+    setSelectedDeviceId(deviceId);
+    localStorage.setItem("selectedDeviceId", deviceId);
+  };
+
+  useEffect(() => {
+    const fetchDevices = async () => {
+      const snapshot = await getDocs(collection(db, "devices"));
+      const devices = snapshot.docs.map((doc) => doc.id);
+      setAvailableDevices(devices);
+
+      if (!selectedDeviceId && devices.length > 0) {
+        setSelectedDeviceId(devices[0]); // ✅ fallback to first device
+        console.log(devices);
+      }
+    };
+
+    fetchDevices();
+  }, []);
+
+  useEffect(() => {
+    console.log(
+      "selectedDeviceId updated:",
+      selectedDeviceId,
+      selectedDeviceId.length
+    );
+  }, [selectedDeviceId]);
 
   // Initialize the device document in Firestore if it doesn't exist
   useEffect(() => {
     const initializeDeviceDocument = async () => {
-      const deviceDocRef = doc(db, "devices", "ESP32_TEST_DEVICE"); // Replace with your device ID
+      const deviceDocRef = doc(db, "devices", selectedDeviceId); // Replace with your device ID
+      // const deviceDocRef = doc(db, "devices", "ESP32_TEST_DEVICE"); // Replace with your device ID
 
       // Check if the document exists
       const deviceDoc = await getDoc(deviceDocRef);
       if (!deviceDoc.exists()) {
         // Create the document with default values
         await setDoc(deviceDocRef, {
-          device_id: "ESP32_TEST_DEVICE",
+          device_id: selectedDeviceId,
+          // device_id: "ESP32_TEST_DEVICE",
           status: "off", // Default status
           last_updated: new Date().toISOString(),
+          total_power: 0, // Add this line!
         });
         console.log("Device document created in Firestore.");
       } else {
@@ -314,7 +348,8 @@ export default function DashboardPage() {
   // Fetch device status from Firestore
   useEffect(() => {
     const fetchDeviceStatus = async () => {
-      const deviceDocRef = doc(db, "devices", "ESP32_TEST_DEVICE"); // Replace with your device ID
+      const deviceDocRef = doc(db, "devices", selectedDeviceId); // Replace with your device ID
+      // const deviceDocRef = doc(db, "devices", "ESP32_TEST_DEVICE"); // Replace with your device ID
       const deviceDoc = await getDoc(deviceDocRef);
       if (deviceDoc.exists()) {
         setDeviceStatus(deviceDoc.data().status === "on");
@@ -333,6 +368,7 @@ export default function DashboardPage() {
       if (timeframe === "real-time") {
         const q = query(
           collection(db, "sensorData"),
+          where("device_id", "==", selectedDeviceId),
           orderBy("timestamp", "desc")
           // limit(10)
         );
@@ -391,6 +427,7 @@ export default function DashboardPage() {
       // Fetch only data within the selected timeframe
       const q = query(
         collection(db, "sensorData"),
+        where("device_id", "==", selectedDeviceId),
         where("timestamp", ">=", startTime.toISOString()),
         where("timestamp", "<=", now.toISOString()),
         orderBy("timestamp", "asc")
@@ -438,7 +475,7 @@ export default function DashboardPage() {
     };
 
     fetchData();
-  }, [timeframe]);
+  }, [timeframe, selectedDeviceId]);
 
   useEffect(() => {
     const ws = new WebSocket(
@@ -461,33 +498,54 @@ export default function DashboardPage() {
         typeof newData.current === "number" ? newData.current : 0;
       newData.power = typeof newData.power === "number" ? newData.power : 0;
 
-      // Update total power consumed (only if power is valid)
-      setTotalPowerConsumed((prevTotal) => {
+      // // Update total power consumed (only if power is valid)
+      // if (newData.device_id === selectedDeviceId) {
+      //   setTotalPowerConsumed((prevTotal) => {
+      //     const powerIncrement = newData.power / 1000 || 0;
+      //     const newTotal = (prevTotal || 0) + powerIncrement;
+      //     return isNaN(newTotal) ? 0 : newTotal;
+      //   });
+      // }
+
+      if (newData.device_id === selectedDeviceId) {
         const powerIncrement = newData.power / 1000 || 0;
-        const newTotal = (prevTotal || 0) + powerIncrement;
-        return isNaN(newTotal) ? 0 : newTotal;
-      });
+
+        // Update UI
+        setTotalPowerConsumed((prev) => {
+          const newTotal = prev + powerIncrement;
+          // Update Firestore as well
+          const deviceRef = doc(db, "devices", selectedDeviceId);
+          updateDoc(deviceRef, { total_power: newTotal }).catch(console.error);
+          return newTotal;
+        });
+
+        // Continue your existing updates: sensorData, deviceStatus, etc.
+      }
 
       // Update device status from WebSocket (primary source of truth)
       if (newData.status !== undefined) {
         setDeviceStatus(newData.status);
 
         // Sync Firestore with the WebSocket status
-        const deviceDocRef = doc(db, "devices", "ESP32_TEST_DEVICE");
+        const deviceDocRef = doc(db, "devices", selectedDeviceId);
+        // const deviceDocRef = doc(db, "devices", "ESP32_TEST_DEVICE");
         updateDoc(deviceDocRef, {
           status: newData.status ? "on" : "off",
           last_updated: new Date().toISOString(),
+        }).catch((err) => {
+          console.error("Failed to update status in Firestore:", err);
         });
       }
 
-      // Update sensor data
-      setSensorData((prevData) => {
-        const updatedData = [...prevData, newData];
-        if (updatedData.length > maxDataPoints) {
-          return updatedData.slice(-maxDataPoints);
-        }
-        return updatedData;
-      });
+      if (newData.device_id === selectedDeviceId) {
+        setSensorData((prevData) => {
+          const updatedData = [...prevData, newData];
+          if (updatedData.length > maxDataPoints) {
+            return updatedData.slice(-maxDataPoints);
+          }
+          return updatedData;
+        });
+      }
     };
 
     ws.onopen = () => {
@@ -505,7 +563,7 @@ export default function DashboardPage() {
     return () => {
       ws.close();
     };
-  }, []);
+  }, [selectedDeviceId]);
 
   const handleToggleDeviceStatus = async (checked: boolean) => {
     if (!ws) {
@@ -542,6 +600,32 @@ export default function DashboardPage() {
       setDeviceStatus(!checked);
     }
   };
+
+  useEffect(() => {
+    if (!selectedDeviceId) return;
+    setSensorData([]); // clear old readings
+    setTotalPowerConsumed(0); // reset power
+
+    // optionally refetch here if needed
+  }, [selectedDeviceId]);
+
+  useEffect(() => {
+    const fetchTotalPower = async () => {
+      if (!selectedDeviceId) return;
+
+      const deviceRef = doc(db, "devices", selectedDeviceId);
+      const deviceSnap = await getDoc(deviceRef);
+
+      if (deviceSnap.exists()) {
+        const data = deviceSnap.data();
+        setTotalPowerConsumed(data.total_power || 0);
+      } else {
+        setTotalPowerConsumed(0);
+      }
+    };
+
+    fetchTotalPower();
+  }, [selectedDeviceId]);
 
   // For the currentPower calculation
   const currentPower =
@@ -605,6 +689,11 @@ export default function DashboardPage() {
             </Select>
           </div>
         </DashboardHeader>
+        <DevicesBox
+          selectedDevice={selectedDeviceId}
+          setSelectedDevice={handleDeviceChange}
+          // setSelectedDevice={setSelectedDeviceId}
+        />
         <InsightsBox />
         <AnomaliesBox />
         <Tabs defaultValue="overview" className="space-y-4">
